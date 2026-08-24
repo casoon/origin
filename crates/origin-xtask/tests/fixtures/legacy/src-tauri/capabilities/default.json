@@ -1,0 +1,11 @@
+{
+  "identifier": "default",
+  "description": "Hand-written, widened one line at a time.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "fs:allow-write-text-file",
+    "fs:allow-read-text-file",
+    "dialog:allow-open"
+  ]
+}

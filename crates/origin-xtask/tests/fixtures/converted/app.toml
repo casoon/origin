@@ -1,0 +1,13 @@
+# A project on origin 0.1.0 that already declares its windows, but still carries the
+# hand-written capability file from before profiles existed.
+
+[origin]
+version = "0.1.0"
+
+[product]
+id = "dev.origin.fixture"
+name = "Fixture"
+version = "1.0.0"
+
+[security.windows]
+main = { profile = "standard-dashboard" }

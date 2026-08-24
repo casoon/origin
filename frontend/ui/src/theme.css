@@ -1,0 +1,64 @@
+/*
+ * Origin design tokens.
+ *
+ * Products import this once and then use the Tailwind utilities it defines
+ * (`bg-surface`, `text-muted`, ...). Raw hex values in product code are a smell:
+ * they are what makes two Origin apps drift apart visually.
+ *
+ * Light and dark are two value sets for the same token names, so no component ever
+ * branches on the colour scheme.
+ */
+
+:root {
+  --origin-canvas: #f6f7f9;
+  --origin-surface: #ffffff;
+  --origin-surface-raised: #ffffff;
+  --origin-border: #e2e5ea;
+  --origin-text: #14171c;
+  --origin-muted: #5c6570;
+  --origin-accent: #0f766e;
+  --origin-healthy: #15803d;
+  --origin-warning: #b45309;
+  --origin-critical: #b91c1c;
+  --origin-unknown: #6b7280;
+  --origin-silver: #aeb4c0;
+  --origin-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --origin-canvas: #0f1115;
+    --origin-surface: #171a21;
+    --origin-surface-raised: #1e222b;
+    --origin-border: #2a2f3a;
+    --origin-text: #e7eaef;
+    --origin-muted: #98a1ae;
+    --origin-accent: #6ee7b7;
+    --origin-healthy: #4ade80;
+    --origin-warning: #fbbf24;
+    --origin-critical: #f87171;
+    --origin-unknown: #9ca3af;
+    --origin-silver: #c3c9d4;
+    --origin-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+  }
+}
+
+@theme inline {
+  --color-canvas: var(--origin-canvas);
+  --color-surface: var(--origin-surface);
+  --color-surface-raised: var(--origin-surface-raised);
+  --color-border-subtle: var(--origin-border);
+  --color-text: var(--origin-text);
+  --color-muted: var(--origin-muted);
+  --color-accent: var(--origin-accent);
+  --color-healthy: var(--origin-healthy);
+  --color-warning: var(--origin-warning);
+  --color-critical: var(--origin-critical);
+  --color-unknown: var(--origin-unknown);
+  --color-silver: var(--origin-silver);
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}

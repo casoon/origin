@@ -1,0 +1,6 @@
+{
+  "identifier": "default",
+  "description": "Hand-written before app.toml existed.",
+  "windows": ["main"],
+  "permissions": ["core:default", "core:event:allow-listen", "core:event:allow-unlisten"]
+}

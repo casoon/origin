@@ -1,0 +1,24 @@
+[package]
+name = "origin-jobs"
+description = "Background jobs for Origin: progress, cancellation and a uniform lifecycle."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+origin-core = { workspace = true }
+origin-events = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+origin-core = { workspace = true, features = ["testing"] }
+time = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
+
+[lints]
+workspace = true

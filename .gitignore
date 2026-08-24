@@ -1,0 +1,32 @@
+# Planung / interne Konzepte (nicht versioniert)
+plan/
+
+# Rust
+/target/
+**/target/
+
+# Node / Frontend
+node_modules/
+dist/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# Tauri (generated per app; the leading ** anchors these anywhere in the tree)
+**/src-tauri/gen/
+**/src-tauri/WixTools/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Lokale Konfiguration / Secrets
+.env
+.env.*
+!.env.example
+*.local

@@ -1,0 +1,27 @@
+[package]
+name = "origin-platform"
+description = "Platform contracts for Origin: the OS capabilities domain code is allowed to depend on."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+testing = []
+
+[dependencies]
+async-trait = { workspace = true }
+origin-core = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+origin-platform = { path = ".", features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

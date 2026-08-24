@@ -1,0 +1,46 @@
+[workspace]
+resolver = "3"
+members = ["src-tauri", "xtask"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+
+[workspace.dependencies]
+origin-app = "__ORIGIN_SEMVER__"
+origin-core = "__ORIGIN_SEMVER__"
+origin-platform = "__ORIGIN_SEMVER__"
+origin-settings = "__ORIGIN_SEMVER__"
+origin-storage = "__ORIGIN_SEMVER__"
+origin-sync = "__ORIGIN_SEMVER__"
+origin-tauri = "__ORIGIN_SEMVER__"
+origin-telemetry = "__ORIGIN_SEMVER__"
+origin-xtask = "__ORIGIN_SEMVER__"
+
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2.11", features = ["tray-icon"] }
+tauri-build = "2.6"
+time = { version = "0.3", features = ["serde-well-known", "macros"] }
+tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "sync", "time"] }
+tracing = "0.1"
+
+# Inherited from Origin. Loosening one of these is a decision worth an ADR.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+todo = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

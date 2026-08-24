@@ -1,0 +1,23 @@
+[package]
+name = "origin-mcp-stdio"
+description = "MCP over stdio: the transport a desktop AI client uses to start an application headless."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+origin-core = { workspace = true }
+origin-mcp = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["io-std", "io-util"] }
+tracing = { workspace = true }
+
+[dev-dependencies]
+async-trait = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-util"] }
+
+[lints]
+workspace = true

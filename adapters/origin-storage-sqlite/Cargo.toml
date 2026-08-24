@@ -1,0 +1,26 @@
+[package]
+name = "origin-storage-sqlite"
+description = "SQLite-backed Storage adapter for Origin."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+origin-core = { workspace = true }
+origin-storage = { workspace = true }
+rusqlite = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+origin-storage = { workspace = true, features = ["testing"] }
+tempfile = "3"
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

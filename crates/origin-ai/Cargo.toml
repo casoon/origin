@@ -1,0 +1,26 @@
+[package]
+name = "origin-ai"
+description = "The AI port for Origin: inference the application performs itself, behind a swappable adapter."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+testing = []
+
+[dependencies]
+async-trait = { workspace = true }
+origin-core = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+origin-ai = { path = ".", features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

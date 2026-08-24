@@ -1,0 +1,29 @@
+[package]
+name = "origin-http"
+description = "HTTP port for Origin: request and response types, rate-limit parsing, status mapping. Knows no HTTP library."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+testing = []
+
+[dependencies]
+async-trait = { workspace = true }
+origin-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+origin-http = { path = ".", features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

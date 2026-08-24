@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@import "@origin/ui/theme.css";
+
+/* The shared component package lives in node_modules, which Tailwind does not scan by
+   default — without this its utility classes are stripped from the build. */
+@source "../node_modules/@origin/ui/src";
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  /* A desktop shell is not a document. */
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+.selectable {
+  user-select: text;
+}

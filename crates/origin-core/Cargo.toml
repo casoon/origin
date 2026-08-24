@@ -1,0 +1,25 @@
+[package]
+name = "origin-core"
+description = "Origin domain primitives and platform ports. Knows no product, no Tauri, no storage engine."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+testing = []
+# Derives TypeScript bindings. Off in shipped builds; enabled by the generator.
+ts = ["dep:ts-rs"]
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+ts-rs = { workspace = true, optional = true }
+uuid = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,38 @@
+[package]
+name = "__CRATE_NAME__"
+description = "__PRODUCT_NAME__"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+name = "__CRATE_NAME_SNAKE___lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { workspace = true }
+
+[dependencies]
+origin-app = { workspace = true }
+origin-core = { workspace = true }
+origin-platform = { workspace = true }
+origin-settings = { workspace = true }
+origin-storage = { workspace = true }
+origin-sync = { workspace = true }
+origin-tauri = { workspace = true }
+origin-telemetry = { workspace = true }
+serde = { workspace = true }
+tauri = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+origin-core = { workspace = true, features = ["testing"] }
+origin-platform = { workspace = true, features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

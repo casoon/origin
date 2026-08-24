@@ -1,0 +1,14 @@
+{
+  "name": "__PACKAGE_NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.26.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "check": "pnpm -r check",
+    "dev": "cargo tauri dev",
+    "build": "pnpm --filter __PACKAGE_NAME__-ui build",
+    "test:e2e": "pnpm --filter __PACKAGE_NAME__-ui test:e2e"
+  }
+}

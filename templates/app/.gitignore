@@ -1,0 +1,29 @@
+# Rust
+/target/
+**/target/
+
+# Node / frontend
+node_modules/
+dist/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# Tauri (generated per app)
+**/src-tauri/gen/
+**/src-tauri/WixTools/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local configuration / secrets
+.env
+.env.*
+!.env.example
+*.local

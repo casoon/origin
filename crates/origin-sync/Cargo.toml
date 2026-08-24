@@ -1,0 +1,35 @@
+[package]
+name = "origin-sync"
+description = "The Origin sync engine: scheduling, backoff, offline handling and sync state. Knows no external service."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+ts = ["dep:ts-rs", "origin-core/ts"]
+
+[dependencies]
+async-trait = { workspace = true }
+origin-core = { workspace = true }
+origin-events = { workspace = true }
+origin-storage = { workspace = true }
+serde = { workspace = true }
+ts-rs = { workspace = true, optional = true }
+serde_json = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+async-trait = { workspace = true }
+origin-core = { workspace = true, features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
+tokio-util = { workspace = true }
+
+[lints]
+workspace = true
