@@ -1,0 +1,46 @@
+[package]
+name = "origin-tauri"
+description = "Tauri host layer for Origin: plugin wiring, tray, IPC commands and the event bridge."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+ts = ["dep:ts-rs", "origin-app/ts", "origin-core/ts", "origin-connector/ts", "origin-sync/ts"]
+
+[dependencies]
+origin-accounts = { workspace = true }
+origin-app = { workspace = true }
+origin-connector = { workspace = true }
+origin-core = { workspace = true }
+origin-events = { workspace = true }
+origin-http = { workspace = true }
+origin-jobs = { workspace = true }
+origin-sync = { workspace = true }
+origin-http-reqwest = { workspace = true }
+origin-notifications-tauri = { workspace = true }
+tokio-util = { workspace = true }
+origin-platform = { workspace = true }
+origin-secrets = { workspace = true }
+origin-secrets-system = { workspace = true }
+origin-settings = { workspace = true }
+origin-storage = { workspace = true }
+origin-storage-sqlite = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true }
+time = { workspace = true }
+serde_json = { workspace = true }
+tauri = { workspace = true }
+tauri-plugin-notification = { workspace = true }
+tauri-plugin-opener = { workspace = true }
+tauri-plugin-single-instance = { workspace = true }
+tauri-plugin-window-state = { workspace = true }
+tracing = { workspace = true }
+ts-rs = { workspace = true, optional = true }
+
+[lints]
+workspace = true

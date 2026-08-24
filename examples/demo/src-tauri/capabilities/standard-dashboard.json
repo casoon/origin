@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "standard-dashboard",
+  "description": "Main window: reads application state and receives platform events. No filesystem, no shell, no process execution. Generated from app.toml — do not edit.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
+  ]
+}

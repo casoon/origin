@@ -1,0 +1,19 @@
+{
+  "name": "@origin/client",
+  "version": "0.1.0",
+  "description": "Typed transport layer between an Origin frontend and the Rust core. The only package that knows Tauri IPC exists.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

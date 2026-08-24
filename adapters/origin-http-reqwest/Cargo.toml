@@ -1,0 +1,22 @@
+[package]
+name = "origin-http-reqwest"
+description = "HttpClient adapter backed by reqwest."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+origin-core = { workspace = true }
+origin-http = { workspace = true }
+reqwest = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

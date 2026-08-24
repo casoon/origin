@@ -1,0 +1,22 @@
+[package]
+name = "origin-auth-loopback"
+description = "Loopback redirect listener for the OAuth authorization code flow (RFC 8252)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+origin-auth = { workspace = true }
+origin-core = { workspace = true }
+tokio = { workspace = true, features = ["net", "io-util", "time"] }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }
+
+[lints]
+workspace = true

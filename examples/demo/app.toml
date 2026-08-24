@@ -1,0 +1,26 @@
+# What this product is (ADR-0021).
+#
+# The composition root in src-tauri/src/lib.rs answers the other question — how it is
+# assembled. Everything derivable from this file is generated, not hand-written:
+# `cargo xtask generate`.
+
+[origin]
+version = "0.2.0"
+
+[product]
+id = "dev.origin.demo"
+name = "Origin Demo"
+version = "0.1.0"
+description = "Reference application for the Origin architecture."
+
+[platform]
+tray = true
+notifications = true
+single_instance = true
+window_state = true
+
+[modules]
+pulse = true
+
+[security.windows]
+main = { profile = "standard-dashboard" }

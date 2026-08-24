@@ -1,0 +1,28 @@
+[package]
+name = "origin-events"
+description = "Typed, in-process event bus for Origin. No string topics, no untyped payloads."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+ts = ["dep:ts-rs", "origin-core/ts"]
+
+[dependencies]
+origin-core = { workspace = true }
+serde = { workspace = true }
+ts-rs = { workspace = true, optional = true }
+time = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros", "time"] }
+
+[lints]
+workspace = true

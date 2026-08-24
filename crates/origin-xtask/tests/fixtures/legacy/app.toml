@@ -1,0 +1,13 @@
+# A project whose capability file grants more than any profile covers — the eTasks
+# case. The migration must refuse to decide and hand the question back.
+
+[origin]
+version = "0.1.0"
+
+[product]
+id = "dev.origin.legacy"
+name = "Legacy"
+version = "1.0.0"
+
+[security.windows]
+main = { profile = "standard-dashboard" }

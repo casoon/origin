@@ -1,0 +1,27 @@
+@import "tailwindcss";
+@import "@origin/ui/theme.css";
+
+/*
+ * The shared component package lives outside this app's directory, so Tailwind has to
+ * be told to scan it — otherwise its utility classes are stripped from the build.
+ */
+@source "../../../frontend/ui/src";
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  /* A desktop shell is not a document: text selection and rubber-band scrolling on
+     chrome elements make it feel like a web page in a frame. */
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+/* Selection stays available where content is meant to be copied. */
+.selectable {
+  user-select: text;
+}

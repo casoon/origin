@@ -1,0 +1,25 @@
+[package]
+name = "origin-secrets-system"
+description = "SecretStore adapter backed by the operating system credential store."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+# The default `v1` feature picks Keychain / Credential Manager / Secret Service per platform.
+keyring = { workspace = true }
+origin-core = { workspace = true }
+origin-secrets = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+origin-secrets = { workspace = true, features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

@@ -1,0 +1,33 @@
+# What this product is. `cargo xtask generate` derives the rest.
+
+[origin]
+version = "__ORIGIN_VERSION__"
+
+[product]
+id = "__PRODUCT_ID__"
+name = "__PRODUCT_NAME__"
+version = "0.1.0"
+description = "An application built on Origin."
+
+[platform]
+tray = false
+notifications = true
+single_instance = true
+window_state = true
+
+[modules]
+example = true
+
+[security.windows]
+main = { profile = "standard-dashboard" }
+
+[distribution]
+channel = "stable"
+targets = ["macos-aarch64", "macos-x86_64", "windows-x86_64", "linux-x86_64"]
+
+# In-app updates are off until you have somewhere to publish to and a signing key.
+# An updater that cannot verify a signature turns a compromised endpoint into arbitrary
+# code execution on every installation — see docs/releasing.md.
+[distribution.updater]
+enabled = false
+endpoints = []

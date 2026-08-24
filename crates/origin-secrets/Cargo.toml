@@ -1,0 +1,27 @@
+[package]
+name = "origin-secrets"
+description = "SecretStore contract for Origin, with an in-memory implementation and a shared contract test suite."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+# Exposes the contract test suite every SecretStore implementation must pass.
+testing = []
+
+[dependencies]
+async-trait = { workspace = true }
+origin-core = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+origin-secrets = { path = ".", features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[lints]
+workspace = true

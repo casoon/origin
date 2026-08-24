@@ -1,0 +1,26 @@
+{
+  "name": "@origin/ui",
+  "version": "0.1.0",
+  "description": "Shared Svelte 5 components and design tokens for Origin applications.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme.css": "./src/theme.css"
+  },
+  "scripts": {
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "peerDependencies": {
+    "svelte": "^5.46.4"
+  },
+  "devDependencies": {
+    "@tsconfig/svelte": "^5.0.8",
+    "svelte": "^5.56.10",
+    "svelte-check": "^4.7.6",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@origin/client": "workspace:*"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "origin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference architecture and starter system for modular Rust + Tauri desktop applications",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.26.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check": "pnpm -r check",
+    "dev": "pnpm --filter @origin/demo tauri dev",
+    "build": "pnpm --filter @origin/demo build"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

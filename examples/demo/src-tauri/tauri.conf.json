@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Origin Demo",
+  "version": "0.1.0",
+  "identifier": "dev.origin.demo",
+  "build": {
+    "beforeDevCommand": "pnpm --filter @origin/demo dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm --filter @origin/demo build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Origin Demo",
+        "width": 980,
+        "height": 700,
+        "minWidth": 640,
+        "minHeight": 480,
+        "resizable": true,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "Reference application for the Origin architecture",
+    "longDescription": "Origin Demo shows how an application built on the Origin reference architecture is assembled: composition root, modules, typed events, cached read models and a Tauri host layer."
+  }
+}
