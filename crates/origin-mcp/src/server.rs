@@ -1,19 +1,40 @@
-use crate::protocol::{PROTOCOL_VERSION, Request, Response, ServerInfo, codes};
+use crate::protocol::{InitializeParams, PROTOCOL_VERSION, Request, Response, ServerInfo, codes};
 use crate::{AiPermissions, Tool};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Lifecycle {
+    Uninitialized,
+    AwaitingInitialized,
+    Ready,
+}
 
 /// Serves an application's tools to an external AI client.
 ///
 /// Transport-agnostic: it turns a request into a response and nothing more, so the same
 /// server works over stdio, over a local HTTP endpoint, or over an in-memory pipe in a
 /// test.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct McpServer {
     info: ServerInfo,
     tools: BTreeMap<String, Arc<dyn Tool>>,
     permissions: AiPermissions,
+    lifecycle: Mutex<Lifecycle>,
+}
+
+impl Clone for McpServer {
+    fn clone(&self) -> Self {
+        Self {
+            info: self.info.clone(),
+            tools: self.tools.clone(),
+            permissions: self.permissions.clone(),
+            // A clone represents another transport session. Tools are shared, but MCP
+            // lifecycle state is connection-local.
+            lifecycle: Mutex::new(Lifecycle::Uninitialized),
+        }
+    }
 }
 
 impl McpServer {
@@ -25,6 +46,7 @@ impl McpServer {
             },
             tools: BTreeMap::new(),
             permissions: AiPermissions::none(),
+            lifecycle: Mutex::new(Lifecycle::Uninitialized),
         }
     }
 
@@ -52,16 +74,35 @@ impl McpServer {
 
     /// Handle one request. Returns `None` for a notification.
     pub async fn handle(&self, request: Request) -> Option<Response> {
+        if request.jsonrpc != "2.0" {
+            return Some(Response::error(
+                request.id.unwrap_or(Value::Null),
+                codes::INVALID_REQUEST,
+                "jsonrpc must be `2.0`",
+            ));
+        }
+
         let Some(id) = request.id.clone() else {
+            if request.method == "notifications/initialized" {
+                let mut lifecycle = self.lifecycle();
+                if *lifecycle == Lifecycle::AwaitingInitialized {
+                    *lifecycle = Lifecycle::Ready;
+                } else {
+                    tracing::warn!("unexpected MCP initialized notification");
+                }
+            }
             tracing::debug!(method = %request.method, "mcp notification");
             return None;
         };
 
         let response = match request.method.as_str() {
-            "initialize" => Response::result(id, self.initialize()),
+            "initialize" => self.initialize(id, request.params),
+            "ping" => Response::result(id, json!({})),
+            _ if *self.lifecycle() != Lifecycle::Ready => {
+                Response::error(id, codes::INVALID_REQUEST, "MCP session is not initialized")
+            }
             "tools/list" => Response::result(id, self.list_tools()),
             "tools/call" => self.call_tool(id, request.params).await,
-            "ping" => Response::result(id, json!({})),
             other => Response::error(
                 id,
                 codes::METHOD_NOT_FOUND,
@@ -72,12 +113,51 @@ impl McpServer {
         Some(response)
     }
 
-    fn initialize(&self) -> Value {
-        json!({
-            "protocolVersion": PROTOCOL_VERSION,
-            "serverInfo": self.info,
-            "capabilities": { "tools": {} }
-        })
+    fn initialize(&self, id: Value, params: Value) -> Response {
+        let params: InitializeParams = match serde_json::from_value(params) {
+            Ok(params) => params,
+            Err(error) => {
+                return Response::error(
+                    id,
+                    codes::INVALID_PARAMS,
+                    format!("invalid initialize parameters: {error}"),
+                );
+            }
+        };
+        if !params.capabilities.is_object() {
+            return Response::error(
+                id,
+                codes::INVALID_PARAMS,
+                "initialize capabilities must be an object",
+            );
+        }
+
+        let mut lifecycle = self.lifecycle();
+        if *lifecycle != Lifecycle::Uninitialized {
+            return Response::error(
+                id,
+                codes::INVALID_REQUEST,
+                "MCP session is already initialized",
+            );
+        }
+        *lifecycle = Lifecycle::AwaitingInitialized;
+        drop(lifecycle);
+
+        tracing::debug!(
+            client = %params.client_info.name,
+            client_version = %params.client_info.version,
+            requested_protocol = %params.protocol_version,
+            "MCP session initialized"
+        );
+
+        Response::result(
+            id,
+            json!({
+                "protocolVersion": PROTOCOL_VERSION,
+                "serverInfo": self.info,
+                "capabilities": { "tools": {} }
+            }),
+        )
     }
 
     fn list_tools(&self) -> Value {
@@ -171,11 +251,24 @@ impl McpServer {
     pub async fn handle_line(&self, line: &str) -> Option<Response> {
         match serde_json::from_str::<Request>(line) {
             Ok(request) => self.handle(request).await,
-            Err(error) => Some(Response::error(
-                Value::Null,
-                codes::INTERNAL_ERROR,
-                format!("malformed request: {error}"),
-            )),
+            Err(error) => {
+                let code = if error.is_syntax() || error.is_eof() {
+                    codes::PARSE_ERROR
+                } else {
+                    codes::INVALID_REQUEST
+                };
+                Some(Response::error(
+                    Value::Null,
+                    code,
+                    format!("malformed request: {error}"),
+                ))
+            }
         }
+    }
+
+    fn lifecycle(&self) -> std::sync::MutexGuard<'_, Lifecycle> {
+        self.lifecycle
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
     }
 }

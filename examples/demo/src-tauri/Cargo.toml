@@ -19,7 +19,7 @@ async-trait = { workspace = true }
 origin-ai = { workspace = true }
 origin-app = { workspace = true }
 origin-connector = { workspace = true }
-origin-core = { workspace = true }
+origin-core = { workspace = true, features = ["ts"] }
 origin-events = { workspace = true }
 origin-platform = { workspace = true }
 origin-settings = { workspace = true }
@@ -37,6 +37,7 @@ tauri = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+ts-rs = { workspace = true }
 
 [dev-dependencies]
 origin-core = { workspace = true, features = ["testing"] }

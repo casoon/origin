@@ -26,6 +26,8 @@ mod server;
 mod tool;
 
 pub use permission::{AiPermission, AiPermissions};
-pub use protocol::{PROTOCOL_VERSION, Request, Response, ResponseError, ServerInfo};
+pub use protocol::{
+    ClientInfo, InitializeParams, PROTOCOL_VERSION, Request, Response, ResponseError, ServerInfo,
+};
 pub use server::McpServer;
 pub use tool::{Tool, ToolDescriptor, ToolOutput};

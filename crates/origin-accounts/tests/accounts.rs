@@ -1,12 +1,15 @@
+use async_trait::async_trait;
 use origin_accounts::{AccountService, AccountStore};
 use origin_auth::{TokenSet, TokenStore};
 use origin_core::testing::FakeClock;
-use origin_core::{AccountStatus, Clock, ConnectorId};
+use origin_core::{AccountStatus, AppError, Clock, ConnectorId, Result};
 use origin_events::{EventBus, PlatformEvent};
-use origin_secrets::{MemorySecretStore, Secret};
+use origin_secrets::{MemorySecretStore, Secret, SecretKey, SecretStore};
 use origin_storage::{MemoryStorage, Record, Storage, StorageKey, namespace};
+use std::collections::HashMap;
 use std::sync::Arc;
 use time::macros::datetime;
+use tokio::sync::Mutex;
 
 struct Harness {
     service: AccountService,
@@ -46,6 +49,85 @@ fn token_set(access: &str) -> TokenSet {
         expires_at: None,
         scopes: vec!["repo".to_owned()],
     }
+}
+
+#[derive(Debug, Default)]
+struct FailingAccountStorage;
+
+#[async_trait]
+impl Storage for FailingAccountStorage {
+    async fn get(&self, _key: &StorageKey) -> Result<Option<Record>> {
+        Ok(None)
+    }
+
+    async fn put(&self, _key: &StorageKey, _record: Record) -> Result<()> {
+        Err(AppError::storage("account database is unavailable"))
+    }
+
+    async fn delete(&self, _key: &StorageKey) -> Result<()> {
+        Ok(())
+    }
+
+    async fn keys(&self, _namespace: &str) -> Result<Vec<StorageKey>> {
+        Ok(Vec::new())
+    }
+
+    async fn clear(&self, _namespace: &str) -> Result<()> {
+        Ok(())
+    }
+
+    async fn clear_prefix(&self, _prefix: &str) -> Result<usize> {
+        Ok(0)
+    }
+}
+
+#[derive(Debug, Default)]
+struct InspectableSecrets(Mutex<HashMap<SecretKey, Secret>>);
+
+#[async_trait]
+impl SecretStore for InspectableSecrets {
+    async fn get(&self, key: &SecretKey) -> Result<Option<Secret>> {
+        Ok(self.0.lock().await.get(key).cloned())
+    }
+
+    async fn set(&self, key: &SecretKey, value: Secret) -> Result<()> {
+        self.0.lock().await.insert(key.clone(), value);
+        Ok(())
+    }
+
+    async fn delete(&self, key: &SecretKey) -> Result<()> {
+        self.0.lock().await.remove(key);
+        Ok(())
+    }
+}
+
+#[tokio::test]
+async fn a_failed_account_write_rolls_back_the_credentials() {
+    let clock: Arc<dyn Clock> = Arc::new(FakeClock::new(datetime!(2026-08-23 10:00 UTC)));
+    let storage: Arc<dyn Storage> = Arc::new(FailingAccountStorage);
+    let secrets = Arc::new(InspectableSecrets::default());
+    let service = AccountService::new(
+        AccountStore::new(storage.clone(), clock.clone()),
+        TokenStore::new(secrets.clone()),
+        EventBus::new(),
+        storage,
+        clock,
+    );
+
+    let error = service
+        .connect(&ConnectorId::new("github"), "work", &token_set("at-work"))
+        .await
+        .unwrap_err();
+
+    assert!(
+        error
+            .to_string()
+            .contains("account database is unavailable")
+    );
+    assert!(
+        secrets.0.lock().await.is_empty(),
+        "a failed connect must not leave an unreachable credential behind"
+    );
 }
 
 #[tokio::test]

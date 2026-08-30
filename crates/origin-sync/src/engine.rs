@@ -157,6 +157,7 @@ impl SyncEngine {
             .collect();
 
         let mut results = Vec::new();
+        let mut runs = Vec::new();
         for (target, policy) in candidates {
             let state = match self.state.load(&target).await {
                 Ok(state) => state,
@@ -170,7 +171,21 @@ impl SyncEngine {
                 continue;
             }
 
-            let outcome = self.sync_now(&target).await;
+            let engine = self.clone();
+            let run_target = target.clone();
+            runs.push((
+                target,
+                tokio::spawn(async move { engine.sync_now(&run_target).await }),
+            ));
+        }
+
+        for (target, run) in runs {
+            let outcome = match run.await {
+                Ok(outcome) => outcome,
+                Err(error) => Err(AppError::internal(format!(
+                    "sync task for {target} failed: {error}"
+                ))),
+            };
             results.push((target, outcome));
         }
 
@@ -186,14 +201,20 @@ impl SyncEngine {
     /// Returns `Ok(None)` when the run was skipped. A user pressing *Refresh* should
     /// go through [`SyncEngine::sync_now`] instead: they asked explicitly.
     pub async fn sync_if_due(&self, target: &SyncTarget) -> Result<Option<SyncOutcome>> {
-        let policy = {
+        let (policy, source, running, cancel) = {
             let targets = self.read();
-            targets
+            let registration = targets
                 .get(target)
-                .map(|registration| registration.policy)
-                .ok_or_else(|| AppError::validation(format!("unknown sync target {target}")))?
+                .ok_or_else(|| AppError::validation(format!("unknown sync target {target}")))?;
+            (
+                registration.policy,
+                registration.source.clone(),
+                registration.running.clone(),
+                registration.cancel.clone(),
+            )
         };
 
+        let _guard = running.lock().await;
         let state = self.state.load(target).await?;
         if let Some(last_attempt) = state.last_attempt
             && self.clock.now() < last_attempt + policy.min_interval
@@ -202,7 +223,9 @@ impl SyncEngine {
             return Ok(None);
         }
 
-        self.sync_now(target).await.map(Some)
+        self.sync_with(target, policy, source, cancel, state)
+            .await
+            .map(Some)
     }
 
     /// Sync one target immediately, whatever the throttle says.
@@ -225,10 +248,19 @@ impl SyncEngine {
         };
 
         let _guard = running.lock().await;
-        let _ = policy;
-
-        let sync_id = SyncId::generate();
         let state = self.state.load(target).await?;
+        self.sync_with(target, policy, source, cancel, state).await
+    }
+
+    async fn sync_with(
+        &self,
+        target: &SyncTarget,
+        policy: SyncPolicy,
+        source: Arc<dyn SyncSource>,
+        cancel: CancellationToken,
+        state: SyncState,
+    ) -> Result<SyncOutcome> {
+        let sync_id = SyncId::generate();
         let context = SyncContext::new(sync_id.clone(), target.clone(), state.clone(), cancel);
 
         let span = tracing::info_span!(

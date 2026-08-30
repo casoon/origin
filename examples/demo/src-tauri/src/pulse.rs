@@ -42,7 +42,7 @@ const LOCAL_ACCOUNT: &str = "local";
 const REFRESH_INTERVAL: Duration = Duration::seconds(30);
 
 /// What the UI renders.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
 pub struct PulseSnapshot {
     pub health: Health,
     pub metric: Option<Metric>,
@@ -308,6 +308,24 @@ mod tests {
     use origin_core::testing::FakeClock;
     use origin_platform::testing::RecordingNotificationService;
     use time::macros::datetime;
+    use ts_rs::{Config, TS};
+
+    #[test]
+    fn the_checked_in_product_contract_matches_rust() {
+        let config = Config::default().with_large_int("number");
+        let expected = format!(
+            "// Generated from PulseSnapshot in src-tauri/src/pulse.rs. Do not edit.\n\n\
+             import type {{ Alert, Health, Metric }} from \"@origin/client\";\n\n\
+             export {}\n",
+            PulseSnapshot::decl(&config)
+        );
+
+        assert_eq!(
+            include_str!("../../src/pulse.generated.ts"),
+            expected,
+            "the product IPC contract drifted; regenerate pulse.generated.ts from the Rust declaration"
+        );
+    }
 
     /// The whole feature is exercised without starting Tauri — the quality gate from
     /// ADR-0002.

@@ -131,30 +131,47 @@ impl AuthorizationFlow {
         let now = self.clock.now();
         let response = self.http.send(request).await?;
 
-        // A token endpoint answers errors with 400 and an `error` field. Mapping that
-        // to `Validation` would tell the user to fix their input; it is really an
-        // authentication failure they can only resolve by signing in again.
         if !response.is_success() {
-            return Err(AppError::Authentication(token_error_message(&response)));
+            return Err(token_endpoint_error(&response, now));
         }
 
         Ok(response.json::<TokenResponse>()?.into_token_set(now))
     }
 }
 
-/// Extract the `error_description` / `error` fields an OAuth error response carries.
-fn token_error_message(response: &origin_http::HttpResponse) -> String {
+/// Only `invalid_grant` proves that the stored authorization is no longer usable.
+/// Provider outages and malformed error responses must not log the user out.
+fn token_endpoint_error(
+    response: &origin_http::HttpResponse,
+    now: time::OffsetDateTime,
+) -> AppError {
     #[derive(serde::Deserialize)]
     struct OAuthError {
         error: Option<String>,
         error_description: Option<String>,
     }
 
-    match response.json::<OAuthError>() {
-        Ok(error) => error
+    if let Ok(error) = response.json::<OAuthError>() {
+        let code = error.error.clone();
+        let message = error
             .error_description
             .or(error.error)
-            .unwrap_or_else(|| format!("token endpoint returned http {}", response.status)),
-        Err(_) => format!("token endpoint returned http {}", response.status),
+            .unwrap_or_else(|| format!("token endpoint returned http {}", response.status));
+
+        return match code.as_deref() {
+            Some("invalid_grant") => AppError::Authentication(message),
+            Some("invalid_client" | "unauthorized_client" | "unsupported_grant_type") => {
+                AppError::Configuration(message)
+            }
+            Some("access_denied" | "invalid_scope") => AppError::Permission(message),
+            _ => AppError::ExternalService(message),
+        };
+    }
+
+    match response.clone().error_for_status(now).unwrap_err() {
+        AppError::Authentication(_) | AppError::Validation(_) => {
+            AppError::ExternalService(format!("token endpoint returned http {}", response.status))
+        }
+        error => error,
     }
 }

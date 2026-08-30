@@ -85,14 +85,16 @@ fn usage() {
     );
 }
 
-/// Parse `new <slug> [--name X] [--id Y] [--into DIR] [--local]`.
+/// Parse `new <slug> [--name X] [--id Y] [--into DIR] [--released]`.
 fn new_from_args(flags: &[String]) -> Result<(), String> {
     let root = workspace_root();
 
     let slug = flags
         .first()
         .filter(|argument| !argument.starts_with("--"))
-        .ok_or_else(|| "usage: cargo xtask new <slug> [--name X] [--id Y]".to_owned())?
+        .ok_or_else(|| {
+            "usage: cargo xtask new <slug> [--name X] [--id Y] [--into DIR] [--released]".to_owned()
+        })?
         .clone();
 
     let value = |name: &str| -> Option<String> {
@@ -109,10 +111,9 @@ fn new_from_args(flags: &[String]) -> Result<(), String> {
         into: value("--into")
             .map(PathBuf::from)
             .unwrap_or_else(|| root.clone()),
-        local: flags
-            .iter()
-            .any(|flag| flag == "--local")
-            .then(|| root.clone()),
+        // Origin packages are not published yet. A normal scaffold therefore points
+        // at the checkout that supplies the template and is buildable immediately.
+        local: (!flags.iter().any(|flag| flag == "--released")).then(|| root.clone()),
         slug,
     };
 

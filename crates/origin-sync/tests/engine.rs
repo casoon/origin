@@ -15,6 +15,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicU32, Ordering};
 use time::Duration;
 use time::macros::datetime;
+use tokio::sync::{Barrier, Notify};
 
 const NOW: time::OffsetDateTime = datetime!(2026-08-23 10:00 UTC);
 
@@ -59,6 +60,33 @@ impl SyncSource for ScriptedSource {
             return Ok(SyncResult::NotModified);
         }
         responses.remove(0)
+    }
+}
+
+#[derive(Debug)]
+struct BlockingSource {
+    calls: AtomicU32,
+    entered: Barrier,
+    release: Notify,
+}
+
+impl BlockingSource {
+    fn new() -> Arc<Self> {
+        Arc::new(Self {
+            calls: AtomicU32::new(0),
+            entered: Barrier::new(2),
+            release: Notify::new(),
+        })
+    }
+}
+
+#[async_trait]
+impl SyncSource for BlockingSource {
+    async fn sync(&self, _context: &SyncContext) -> Result<SyncResult> {
+        self.calls.fetch_add(1, Ordering::SeqCst);
+        self.entered.wait().await;
+        self.release.notified().await;
+        Ok(SyncResult::NotModified)
     }
 }
 
@@ -475,6 +503,60 @@ async fn a_repeated_trigger_is_throttled_but_an_explicit_refresh_is_not() {
             .is_some()
     );
     assert_eq!(source.calls(), 3);
+}
+
+#[tokio::test]
+async fn concurrent_triggers_recheck_the_throttle_after_waiting_for_the_same_target() {
+    let harness = harness();
+    let source = BlockingSource::new();
+    let notifications = target("notifications");
+    harness.engine.register(
+        notifications.clone(),
+        policy(Duration::minutes(5)).with_min_interval(Duration::seconds(30)),
+        source.clone(),
+    );
+
+    let first = {
+        let engine = harness.engine.clone();
+        let target = notifications.clone();
+        tokio::spawn(async move { engine.sync_if_due(&target).await })
+    };
+    source.entered.wait().await;
+
+    let second = {
+        let engine = harness.engine.clone();
+        let target = notifications.clone();
+        tokio::spawn(async move { engine.sync_if_due(&target).await })
+    };
+    source.release.notify_one();
+
+    assert!(first.await.unwrap().unwrap().is_some());
+    assert!(second.await.unwrap().unwrap().is_none());
+    assert_eq!(source.calls.load(Ordering::SeqCst), 1);
+}
+
+#[tokio::test]
+async fn one_slow_target_does_not_block_other_due_targets() {
+    let harness = harness();
+    let slow = BlockingSource::new();
+    let fast = ScriptedSource::new();
+    harness
+        .engine
+        .register(target("a-slow"), policy(Duration::minutes(5)), slow.clone());
+    harness
+        .engine
+        .register(target("z-fast"), policy(Duration::minutes(5)), fast.clone());
+
+    let run = {
+        let engine = harness.engine.clone();
+        tokio::spawn(async move { engine.run_due(NOW).await })
+    };
+    slow.entered.wait().await;
+    tokio::task::yield_now().await;
+
+    assert_eq!(fast.calls(), 1);
+    slow.release.notify_one();
+    run.await.unwrap();
 }
 
 #[tokio::test]

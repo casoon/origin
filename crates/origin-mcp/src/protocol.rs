@@ -1,13 +1,6 @@
 //! The JSON-RPC 2.0 envelope MCP speaks.
 //!
-//! Only what this server needs: `initialize`, `tools/list`, `tools/call`. Those three
-//! have been the stable core of MCP since the beginning.
-//!
-//! **Verify before connecting a real client.** The revision this was written against
-//! is beyond the author's knowledge cutoff, and details — capability negotiation, the
-//! exact result shapes, whether the transport is stateless — are the parts most likely
-//! to have moved. The *boundary* in this crate is what matters architecturally; the
-//! envelope is replaceable.
+//! Only what this server needs: lifecycle, `tools/list`, and `tools/call`.
 
 use serde::{Deserialize, Serialize};
 
@@ -21,9 +14,21 @@ pub struct ServerInfo {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InitializeParams {
+    pub protocol_version: String,
+    pub capabilities: serde_json::Value,
+    pub client_info: ClientInfo,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ClientInfo {
+    pub name: String,
+    pub version: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct Request {
-    #[allow(dead_code)]
-    #[serde(default = "jsonrpc_version")]
     pub jsonrpc: String,
     /// Absent for notifications, which take no response.
     #[serde(default)]
@@ -31,10 +36,6 @@ pub struct Request {
     pub method: String,
     #[serde(default)]
     pub params: serde_json::Value,
-}
-
-fn jsonrpc_version() -> String {
-    "2.0".to_owned()
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -55,10 +56,10 @@ pub struct ResponseError {
 
 /// JSON-RPC error codes, plus the one MCP-specific case this server produces.
 pub(crate) mod codes {
+    pub(crate) const PARSE_ERROR: i32 = -32700;
     pub(crate) const INVALID_REQUEST: i32 = -32600;
     pub(crate) const METHOD_NOT_FOUND: i32 = -32601;
     pub(crate) const INVALID_PARAMS: i32 = -32602;
-    pub(crate) const INTERNAL_ERROR: i32 = -32603;
 }
 
 impl Response {

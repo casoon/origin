@@ -3,8 +3,7 @@ use origin_core::{AppError, Clock, Job, JobId, JobStatus, Progress, Result};
 use origin_events::{EventBus, JobFinished, JobProgress, JobStarted, PlatformEvent};
 use std::collections::HashMap;
 use std::future::Future;
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::sync::{Arc, RwLock};
 use tokio_util::sync::CancellationToken;
 
 /// How many finished jobs to keep for the UI before dropping the oldest.
@@ -67,14 +66,30 @@ impl Jobs {
         let id = job.id.clone();
         let cancel = CancellationToken::new();
 
+        {
+            let mut inner = self
+                .inner
+                .write()
+                .unwrap_or_else(|error| error.into_inner());
+            let sequence = inner.next_sequence;
+            inner.next_sequence += 1;
+            inner.entries.insert(
+                id.clone(),
+                Entry {
+                    job,
+                    cancel: cancel.clone(),
+                    published_ratio: None,
+                    sequence,
+                },
+            );
+        }
+
         let registry = self.clone();
         let context = JobContext::new(id.clone(), registry.clone(), cancel.clone());
         let started_id = id.clone();
 
         tokio::spawn(async move {
-            registry
-                .mark_started(&started_id, job, cancel.clone(), kind.clone())
-                .await;
+            registry.mark_started(&started_id, kind.clone());
 
             // The inner task isolates a panic: awaiting its handle turns the panic into
             // a JoinError we can record.
@@ -88,9 +103,7 @@ impl Jobs {
                 Err(_) => (JobStatus::Failed, Some("the job panicked".to_owned())),
             };
 
-            registry
-                .mark_finished(&started_id, kind, status_and_error.0, status_and_error.1)
-                .await;
+            registry.mark_finished(&started_id, kind, status_and_error.0, status_and_error.1);
         });
 
         id
@@ -99,7 +112,7 @@ impl Jobs {
     pub async fn get(&self, id: &JobId) -> Option<Job> {
         self.inner
             .read()
-            .await
+            .unwrap_or_else(|error| error.into_inner())
             .entries
             .get(id)
             .map(|e| e.job.clone())
@@ -107,7 +120,7 @@ impl Jobs {
 
     /// Every known job, newest first.
     pub async fn list(&self) -> Vec<Job> {
-        let inner = self.inner.read().await;
+        let inner = self.inner.read().unwrap_or_else(|error| error.into_inner());
         let mut entries: Vec<&Entry> = inner.entries.values().collect();
         entries.sort_by_key(|entry| std::cmp::Reverse(entry.sequence));
         entries.into_iter().map(|entry| entry.job.clone()).collect()
@@ -126,7 +139,7 @@ impl Jobs {
     /// Returns once the request is recorded, not once the job stopped — a job decides
     /// itself when it can stop safely.
     pub async fn cancel(&self, id: &JobId) -> Result<()> {
-        let inner = self.inner.read().await;
+        let inner = self.inner.read().unwrap_or_else(|error| error.into_inner());
         let entry = inner
             .entries
             .get(id)
@@ -143,29 +156,17 @@ impl Jobs {
         Ok(())
     }
 
-    async fn mark_started(
-        &self,
-        id: &JobId,
-        mut job: Job,
-        cancel: CancellationToken,
-        kind: String,
-    ) {
-        job.status = JobStatus::Running;
-        job.started_at = self.clock.now();
-
+    fn mark_started(&self, id: &JobId, kind: String) {
         {
-            let mut inner = self.inner.write().await;
-            let sequence = inner.next_sequence;
-            inner.next_sequence += 1;
-            inner.entries.insert(
-                id.clone(),
-                Entry {
-                    job,
-                    cancel,
-                    published_ratio: None,
-                    sequence,
-                },
-            );
+            let mut inner = self
+                .inner
+                .write()
+                .unwrap_or_else(|error| error.into_inner());
+            let Some(entry) = inner.entries.get_mut(id) else {
+                return;
+            };
+            entry.job.status = JobStatus::Running;
+            entry.job.started_at = self.clock.now();
         }
 
         let _ = self.events.publish(PlatformEvent::JobStarted(JobStarted {
@@ -176,7 +177,10 @@ impl Jobs {
 
     pub(crate) async fn report_progress(&self, id: &JobId, current: u64, total: Option<u64>) {
         let should_publish = {
-            let mut inner = self.inner.write().await;
+            let mut inner = self
+                .inner
+                .write()
+                .unwrap_or_else(|error| error.into_inner());
             let Some(entry) = inner.entries.get_mut(id) else {
                 return;
             };
@@ -207,15 +211,12 @@ impl Jobs {
         }
     }
 
-    async fn mark_finished(
-        &self,
-        id: &JobId,
-        kind: String,
-        status: JobStatus,
-        error: Option<String>,
-    ) {
+    fn mark_finished(&self, id: &JobId, kind: String, status: JobStatus, error: Option<String>) {
         {
-            let mut inner = self.inner.write().await;
+            let mut inner = self
+                .inner
+                .write()
+                .unwrap_or_else(|error| error.into_inner());
             if let Some(entry) = inner.entries.get_mut(id) {
                 entry.job.status = status;
                 entry.job.finished_at = Some(self.clock.now());

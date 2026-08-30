@@ -33,6 +33,26 @@ fn session(requests: &[Value]) -> Vec<Value> {
 
     {
         let stdin = child.stdin.as_mut().expect("stdin");
+        writeln!(
+            stdin,
+            "{}",
+            request(
+                0,
+                "initialize",
+                json!({
+                    "protocolVersion": origin_mcp::PROTOCOL_VERSION,
+                    "capabilities": {},
+                    "clientInfo": { "name": "origin-e2e", "version": "1.0.0" }
+                })
+            )
+        )
+        .expect("write initialize request");
+        writeln!(
+            stdin,
+            "{}",
+            json!({ "jsonrpc": "2.0", "method": "notifications/initialized" })
+        )
+        .expect("write initialized notification");
         for request in requests {
             writeln!(stdin, "{request}").expect("write request");
         }
@@ -54,7 +74,8 @@ fn session(requests: &[Value]) -> Vec<Value> {
     child.wait().expect("the process exits");
     let _ = std::fs::remove_dir_all(&data_dir);
 
-    responses
+    assert_eq!(responses[0]["result"]["serverInfo"]["name"], "origin-demo");
+    responses.into_iter().skip(1).collect()
 }
 
 fn request(id: u32, method: &str, params: Value) -> Value {
@@ -63,15 +84,11 @@ fn request(id: u32, method: &str, params: Value) -> Value {
 
 #[test]
 fn the_application_answers_an_ai_client_without_a_window() {
-    let responses = session(&[
-        request(1, "initialize", json!({})),
-        request(2, "tools/list", json!({})),
-    ]);
+    let responses = session(&[request(1, "tools/list", json!({}))]);
 
-    assert_eq!(responses.len(), 2);
-    assert_eq!(responses[0]["result"]["serverInfo"]["name"], "origin-demo");
+    assert_eq!(responses.len(), 1);
 
-    let names: Vec<&str> = responses[1]["result"]["tools"]
+    let names: Vec<&str> = responses[0]["result"]["tools"]
         .as_array()
         .expect("a tool list")
         .iter()

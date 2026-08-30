@@ -91,6 +91,7 @@ handling, settings, secrets, storage, a security profile, CI, and a module that 
 already testable without a desktop session. Its `xtask` is three lines, so the rules
 and the generator arrive with a version bump.
 
-`--local` points the dependencies at an Origin checkout instead of at released
-versions. That is how Origin's own CI proves the template still builds against `main`
-(ADR-0026) — and how you develop the platform and a product side by side.
+Until the Origin packages are published, scaffolding points dependencies at the current
+checkout so the generated project builds immediately. `--released` switches to registry
+versions once those releases exist. Origin's own CI always tests the local form against
+`main` (ADR-0026).

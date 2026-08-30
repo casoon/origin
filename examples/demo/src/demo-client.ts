@@ -5,13 +5,10 @@
  * component ever calls `command()` with a raw string, let alone `invoke()`.
  */
 
-import { command, type Alert, type Health, type Metric } from "@origin/client";
+import { command } from "@origin/client";
+import type { PulseSnapshot } from "./pulse.generated";
 
-export interface PulseSnapshot {
-  health: Health;
-  metric: Metric | null;
-  alerts: Alert[];
-}
+export type { PulseSnapshot } from "./pulse.generated";
 
 export const pulse = {
   /** Current state, from cache. Cheap. */

@@ -113,19 +113,6 @@ impl LoopbackRedirect {
                 .map(|(_, v)| v.clone())
         };
 
-        if let Some(error) = get("error") {
-            let description = get("error_description").unwrap_or_else(|| error.clone());
-            respond(
-                &mut stream,
-                400,
-                "Authorization was denied. You can close this window.",
-            )
-            .await;
-            return Err(AppError::Authentication(format!(
-                "authorization was denied: {description}"
-            )));
-        }
-
         // The state check is what makes this listener safe: anything on localhost can
         // hit this port, but only the flow we started knows the state.
         match get("state") {
@@ -143,6 +130,19 @@ impl LoopbackRedirect {
                         .to_owned(),
                 ));
             }
+        }
+
+        if let Some(error) = get("error") {
+            let description = get("error_description").unwrap_or_else(|| error.clone());
+            respond(
+                &mut stream,
+                400,
+                "Authorization was denied. You can close this window.",
+            )
+            .await;
+            return Err(AppError::Authentication(format!(
+                "authorization was denied: {description}"
+            )));
         }
 
         let Some(code) = get("code") else {
@@ -242,4 +242,5 @@ async fn respond(stream: &mut TcpStream, status: u16, message: &str) {
         tracing::debug!(%error, "cannot write loopback redirect response");
     }
     let _ = stream.flush().await;
+    let _ = stream.shutdown().await;
 }

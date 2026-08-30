@@ -29,6 +29,8 @@ pub struct Options {
 }
 
 pub fn run(root: &Path, options: &Options) -> Result<(), String> {
+    validate_options(options)?;
+
     let template = root.join("templates").join("app");
     if !template.is_dir() {
         return Err(format!(
@@ -59,6 +61,60 @@ pub fn run(root: &Path, options: &Options) -> Result<(), String> {
     println!("  pnpm install");
     println!("  cargo tauri dev");
     println!("\nReplace the placeholder icons in src-tauri/icons before shipping.");
+    Ok(())
+}
+
+fn validate_options(options: &Options) -> Result<(), String> {
+    let valid_slug = !options.slug.is_empty()
+        && !options.slug.starts_with('-')
+        && !options.slug.ends_with('-')
+        && !options.slug.contains("--")
+        && options
+            .slug
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-');
+    if !valid_slug {
+        return Err(format!(
+            "invalid slug `{}` — use lowercase ASCII letters, digits and single path-safe hyphens",
+            options.slug
+        ));
+    }
+
+    if options.name.trim().is_empty()
+        || options
+            .name
+            .chars()
+            .any(|character| character.is_control() || matches!(character, '"' | '\\'))
+    {
+        return Err(
+            "product name must be non-empty and contain no control characters, quotes or backslashes"
+                .to_owned(),
+        );
+    }
+
+    let labels: Vec<&str> = options.id.split('.').collect();
+    let valid_id = labels.len() >= 2
+        && labels.iter().all(|label| {
+            !label.is_empty()
+                && label
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+                && label
+                    .bytes()
+                    .next()
+                    .is_some_and(|byte| byte.is_ascii_alphanumeric())
+                && label
+                    .bytes()
+                    .next_back()
+                    .is_some_and(|byte| byte.is_ascii_alphanumeric())
+        });
+    if !valid_id {
+        return Err(format!(
+            "invalid product id `{}` — expected a reverse-DNS identifier",
+            options.id
+        ));
+    }
+
     Ok(())
 }
 
@@ -192,16 +248,18 @@ fn rewrite_npm_dependencies(target: &Path, origin: &Path) -> Result<(), String> 
     let contents = std::fs::read_to_string(&manifest)
         .map_err(|error| format!("cannot read {}: {error}", manifest.display()))?;
 
+    let client_release = format!("\"@origin/client\": \"^{CURRENT}\"");
+    let ui_release = format!("\"@origin/ui\": \"^{CURRENT}\"");
     let rewritten = contents
         .replace(
-            "\"@origin/client\": \"^0.2.0\"",
+            &client_release,
             &format!(
                 "\"@origin/client\": \"link:{}\"",
                 origin.join("frontend").join("client").display()
             ),
         )
         .replace(
-            "\"@origin/ui\": \"^0.2.0\"",
+            &ui_release,
             &format!(
                 "\"@origin/ui\": \"link:{}\"",
                 origin.join("frontend").join("ui").display()

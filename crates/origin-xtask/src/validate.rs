@@ -185,8 +185,12 @@ fn check_manifest_matches_tauri_config(root: &Path) -> Result<Vec<String>, Strin
         let project = manifest_path.parent().unwrap_or(root);
         let config_path = project.join("src-tauri").join("tauri.conf.json");
 
-        let Ok(config) = read(&config_path) else {
-            continue;
+        let config = match read(&config_path) {
+            Ok(config) => config,
+            Err(error) => {
+                failures.push(error);
+                continue;
+            }
         };
         let config: serde_json::Value = match serde_json::from_str(&config) {
             Ok(config) => config,
@@ -234,22 +238,13 @@ fn check_manifest_matches_tauri_config(root: &Path) -> Result<Vec<String>, Strin
 /// catches a typo or a renamed command until it fails at runtime in front of a user.
 fn check_commands_exist(root: &Path) -> Result<Vec<String>, String> {
     let mut defined = Vec::new();
-    for directory in [
-        root.join("host"),
-        root.join("examples"),
-        root.join("crates"),
-    ] {
-        for file in rust_sources(&directory)? {
-            let contents = read(&file)?;
-            defined.extend(tauri_command_names(&contents));
-        }
+    for file in rust_sources(root)? {
+        let contents = read(&file)?;
+        defined.extend(tauri_command_names(&contents));
     }
 
     let mut failures = Vec::new();
-    for file in frontend_sources(&root.join("frontend"))?
-        .into_iter()
-        .chain(frontend_sources(&root.join("examples"))?)
-    {
+    for file in frontend_sources(root)? {
         let contents = read(&file)?;
         for name in invoked_command_names(&contents) {
             if !defined.contains(&name) {
@@ -297,15 +292,39 @@ fn tauri_command_names(contents: &str) -> Vec<String> {
 
 /// Command names passed to the client's `command("...")` helper.
 fn invoked_command_names(contents: &str) -> Vec<String> {
-    contents
-        .match_indices("command<")
-        .filter_map(|(index, _)| {
-            let rest = &contents[index..];
-            let open = rest.find('"')?;
-            let close = rest[open + 1..].find('"')?;
-            Some(rest[open + 1..open + 1 + close].to_owned())
-        })
-        .collect()
+    let mut names = Vec::new();
+    let mut remaining = contents;
+
+    while let Some(index) = remaining.find("command") {
+        remaining = &remaining[index + "command".len()..];
+        let Some(arguments) = remaining.find('(') else {
+            break;
+        };
+        let before_arguments = &remaining[..arguments];
+        let plain_call = before_arguments.trim().is_empty();
+        let generic_call = before_arguments.trim_start().starts_with('<')
+            && before_arguments.trim_end().ends_with('>');
+        if !(plain_call || generic_call) {
+            continue;
+        }
+
+        let rest = &remaining[arguments + 1..];
+        let rest = rest.trim_start();
+        let Some(quote) = rest
+            .chars()
+            .next()
+            .filter(|quote| matches!(quote, '"' | '\''))
+        else {
+            continue;
+        };
+        let value = &rest[quote.len_utf8()..];
+        let Some(close) = value.find(quote) else {
+            continue;
+        };
+        names.push(value[..close].to_owned());
+    }
+
+    names
 }
 
 // ---------------------------------------------------------------------------
@@ -408,4 +427,22 @@ fn relative(root: &Path, file: &Path) -> String {
         .unwrap_or(file)
         .to_string_lossy()
         .into_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn command_calls_with_and_without_a_generic_are_found() {
+        let source = r#"
+            command<Result>("with_result");
+            command('without_result');
+        "#;
+
+        assert_eq!(
+            invoked_command_names(source),
+            vec!["with_result", "without_result"]
+        );
+    }
 }

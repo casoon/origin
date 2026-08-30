@@ -112,6 +112,8 @@ adr/               architecture decision records
 On Linux you also need the Tauri system dependencies (`libwebkit2gtk-4.1-dev`,
 `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`).
 
+> **Note**: If you use [Volta](https://volta.sh/) as your Node version manager on macOS, ensure your user owns `~/.volta` (`chown -R $(whoami) ~/.volta`) to prevent Volta permission errors during `pnpm` workspace checks.
+
 ## Getting started
 
 ```bash
@@ -168,9 +170,9 @@ cargo test -p origin-secrets-system -- --ignored
   granting read and propose but never commit or delete, because the caller is a model
   acting on content that may be hostile. Inference the application performs itself is a
   separate, swappable port.
-- **Contracts generated, not mirrored.** Every type crossing IPC is generated from its
-  Rust definition; a rename in Rust fails the frontend check instead of surfacing as
-  `undefined` in production.
+- **Contracts generated, not mirrored.** Platform IPC types and each product's own
+  command results are derived from their Rust definitions; a rename in Rust fails CI
+  instead of surfacing as `undefined` in production.
 - **An upgrade path, not a one-time copy.** Each project records the Origin version it
   tracks; `cargo xtask update` runs the migrations between it and the current one,
   regenerates, and hands back a checklist for anything only a human can decide. The

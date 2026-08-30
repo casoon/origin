@@ -347,6 +347,44 @@ async fn a_rejected_refresh_token_discards_the_credentials() {
 }
 
 #[tokio::test]
+async fn a_transient_refresh_failure_keeps_the_credentials() {
+    let harness = harness();
+    harness.http.push_json(
+        200,
+        r#"{"access_token":"at-1","refresh_token":"rt-1","expires_in":60}"#,
+    );
+    harness.http.push_json(
+        503,
+        r#"{"error":"temporarily_unavailable","error_description":"try again"}"#,
+    );
+    harness.http.push_json(
+        200,
+        r#"{"access_token":"at-2","refresh_token":"rt-2","expires_in":3600}"#,
+    );
+
+    let provider = provider(&harness);
+    let account = AccountId::new("acc-1");
+    let tokens = harness
+        .flow
+        .authorize(
+            &FakeRedirectListener::returning("code"),
+            &RecordingOpener::new(),
+        )
+        .await
+        .unwrap();
+    provider.store(&account, &tokens).await.unwrap();
+
+    harness.clock.advance(Duration::seconds(30));
+    let error = provider.access_token(&account).await.unwrap_err();
+    assert_eq!(error.kind(), ErrorKind::ExternalService);
+
+    assert_eq!(
+        provider.access_token(&account).await.unwrap().expose(),
+        "at-2"
+    );
+}
+
+#[tokio::test]
 async fn an_account_without_a_refresh_token_asks_the_user_to_reconnect() {
     let harness = harness();
     harness

@@ -13,6 +13,18 @@ fn jobs() -> (Jobs, EventBus) {
     (Jobs::new(events.clone(), clock), events)
 }
 
+#[tokio::test(flavor = "current_thread")]
+async fn a_spawned_job_is_immediately_visible_and_cancellable() {
+    let (jobs, _) = jobs();
+    let id = jobs.spawn("waiting", |ctx| async move {
+        ctx.cancelled().await;
+        Ok(())
+    });
+
+    assert_eq!(jobs.get(&id).await.unwrap().status, JobStatus::Queued);
+    jobs.cancel(&id).await.unwrap();
+}
+
 /// Wait until `predicate` holds, or fail. Jobs run on their own task, so a test cannot
 /// assume they finished the moment `spawn` returned.
 async fn eventually<F, Fut>(what: &str, mut predicate: F)

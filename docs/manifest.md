@@ -42,7 +42,8 @@ from it.
 
 ## What gets generated
 
-- `frontend/client/src/generated.ts` — every type that crosses the IPC boundary,
+- `frontend/client/src/generated.ts` — every platform type that crosses the IPC boundary;
+  product modules keep their own `ts-rs`-derived bindings next to their frontend client,
   derived from the Rust definitions (ADR-0024)
 - `src-tauri/capabilities/*.json` — one file per security profile
 
@@ -50,6 +51,10 @@ from it.
 cargo xtask generate          # write them
 cargo xtask generate --check  # fail if stale or hand-edited (runs in CI)
 ```
+
+Those commands own the platform bindings and capabilities. A product binding is derived
+in its product crate and compared with the checked-in TypeScript during `cargo test`;
+the demo's `PulseSnapshot` is the reference pattern.
 
 Nothing in `@origin/client` hand-mirrors a Rust type any more: `types.ts` is a re-export
 list. Adding an event variant in Rust now breaks the frontend's exhaustive `switch` at

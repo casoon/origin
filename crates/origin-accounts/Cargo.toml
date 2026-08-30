@@ -18,6 +18,7 @@ serde_json = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+async-trait = { workspace = true }
 origin-core = { workspace = true, features = ["testing"] }
 origin-storage = { workspace = true }
 origin-secrets = { workspace = true }

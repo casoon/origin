@@ -26,9 +26,17 @@ async fn request(redirect_uri: &str, target: &str) -> String {
     response
 }
 
+/// Helper to bind a listener with a 5-second test timeout so socket failures fail fast.
+async fn test_listener() -> LoopbackRedirect {
+    LoopbackRedirect::bind()
+        .await
+        .unwrap()
+        .with_timeout(Duration::from_secs(5))
+}
+
 #[tokio::test]
 async fn the_redirect_uri_points_at_an_ephemeral_loopback_port() {
-    let listener = LoopbackRedirect::bind().await.unwrap();
+    let listener = test_listener().await;
     let uri = listener.redirect_uri();
 
     assert!(uri.starts_with("http://127.0.0.1:"), "got {uri}");
@@ -41,15 +49,15 @@ async fn the_redirect_uri_points_at_an_ephemeral_loopback_port() {
 
 #[tokio::test]
 async fn two_listeners_never_share_a_port() {
-    let first = LoopbackRedirect::bind().await.unwrap();
-    let second = LoopbackRedirect::bind().await.unwrap();
+    let first = test_listener().await;
+    let second = test_listener().await;
 
     assert_ne!(first.redirect_uri(), second.redirect_uri());
 }
 
 #[tokio::test]
 async fn a_matching_redirect_yields_the_code() {
-    let listener = LoopbackRedirect::bind().await.unwrap();
+    let listener = test_listener().await;
     let uri = listener.redirect_uri();
 
     let client =
@@ -65,20 +73,21 @@ async fn a_matching_redirect_yields_the_code() {
 
 #[tokio::test]
 async fn a_percent_encoded_code_is_decoded() {
-    let listener = LoopbackRedirect::bind().await.unwrap();
+    let listener = test_listener().await;
     let uri = listener.redirect_uri();
 
-    tokio::spawn(async move { request(&uri, "/callback?code=a%2Fb%2Bc&state=s").await });
+    let client = tokio::spawn(async move { request(&uri, "/callback?code=a%2Fb%2Bc&state=s").await });
 
     assert_eq!(listener.wait("s").await.unwrap().as_str(), "a/b+c");
+    client.await.unwrap();
 }
 
 #[tokio::test]
 async fn a_denied_authorization_is_reported_with_its_description() {
-    let listener = LoopbackRedirect::bind().await.unwrap();
+    let listener = test_listener().await;
     let uri = listener.redirect_uri();
 
-    tokio::spawn(async move {
+    let client = tokio::spawn(async move {
         request(
             &uri,
             "/callback?error=access_denied&error_description=The+user+said+no&state=s",
@@ -87,6 +96,7 @@ async fn a_denied_authorization_is_reported_with_its_description() {
     });
 
     let error = listener.wait("s").await.unwrap_err();
+    client.await.unwrap();
 
     assert_eq!(error.kind(), ErrorKind::Authentication);
     assert!(
@@ -97,23 +107,44 @@ async fn a_denied_authorization_is_reported_with_its_description() {
 
 #[tokio::test]
 async fn a_redirect_with_the_wrong_state_is_rejected() {
-    let listener = LoopbackRedirect::bind().await.unwrap();
+    let listener = test_listener().await;
     let uri = listener.redirect_uri();
 
-    tokio::spawn(async move { request(&uri, "/callback?code=stolen&state=attacker").await });
+    let client = tokio::spawn(async move { request(&uri, "/callback?code=stolen&state=attacker").await });
 
     let error = listener.wait("our-state").await.unwrap_err();
+    client.await.unwrap();
 
     assert_eq!(error.kind(), ErrorKind::Authentication);
     assert!(error.to_string().contains("expected state"), "got: {error}");
 }
 
 #[tokio::test]
-async fn unrelated_requests_do_not_end_the_wait() {
-    let listener = LoopbackRedirect::bind().await.unwrap();
+async fn an_error_redirect_must_pass_the_state_check_too() {
+    let listener = test_listener().await;
     let uri = listener.redirect_uri();
 
-    tokio::spawn(async move {
+    let client = tokio::spawn(async move {
+        request(
+            &uri,
+            "/callback?error=access_denied&error_description=attacker-controlled&state=attacker",
+        )
+        .await
+    });
+
+    let error = listener.wait("our-state").await.unwrap_err();
+    client.await.unwrap();
+
+    assert!(error.to_string().contains("expected state"), "got: {error}");
+    assert!(!error.to_string().contains("attacker-controlled"));
+}
+
+#[tokio::test]
+async fn unrelated_requests_do_not_end_the_wait() {
+    let listener = test_listener().await;
+    let uri = listener.redirect_uri();
+
+    let client = tokio::spawn(async move {
         // Browsers ask for this the moment they open the page.
         let favicon = request(&uri, "/favicon.ico").await;
         assert!(favicon.starts_with("HTTP/1.1 404"), "got: {favicon}");
@@ -122,6 +153,7 @@ async fn unrelated_requests_do_not_end_the_wait() {
     });
 
     assert_eq!(listener.wait("s").await.unwrap().as_str(), "code-abc");
+    client.await.unwrap();
 }
 
 #[tokio::test]

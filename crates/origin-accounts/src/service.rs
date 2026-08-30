@@ -37,9 +37,8 @@ impl AccountService {
 
     /// Register a freshly authorized account.
     ///
-    /// Credentials are written first: an account record without credentials is a broken
-    /// entry the user has to notice and remove, while credentials without a record are
-    /// merely orphaned and get overwritten on the next connect.
+    /// Credentials are written first so no visible account can exist without them. If
+    /// persisting the account fails, the credential write is rolled back.
     pub async fn connect(
         &self,
         connector: &ConnectorId,
@@ -55,7 +54,14 @@ impl AccountService {
         };
 
         self.tokens.save(connector, &account.id, tokens).await?;
-        self.accounts.save(&account).await?;
+        if let Err(save_error) = self.accounts.save(&account).await {
+            if let Err(cleanup_error) = self.tokens.delete(connector, &account.id).await {
+                return Err(AppError::storage(format!(
+                    "{save_error}; rolling back credentials also failed: {cleanup_error}"
+                )));
+            }
+            return Err(save_error);
+        }
 
         tracing::info!(
             %connector,
