@@ -42,6 +42,35 @@ pub struct Jobs {
     clock: Arc<dyn Clock>,
 }
 
+/// A job's own return value, obtained from [`Jobs::spawn_awaitable`] or
+/// [`Jobs::spawn_exclusive_awaitable`].
+///
+/// Separate from [`Job`], the registry's shared status record: this is process-local
+/// and typed per call, for a caller that needs what the job actually produced rather
+/// than just whether it finished.
+#[derive(Debug)]
+pub struct JobResult<T> {
+    id: JobId,
+    rx: tokio::sync::oneshot::Receiver<Result<T>>,
+}
+
+impl<T> JobResult<T> {
+    pub fn id(&self) -> &JobId {
+        &self.id
+    }
+
+    /// Waits for the job to finish and returns what its body returned.
+    ///
+    /// A job that observed cancellation and returned `Err` surfaces that error here
+    /// exactly as the body produced it — cancellation reaches a waiter the same way any
+    /// other failure would, there is no separate "was it cancelled" case to handle.
+    pub async fn wait(self) -> Result<T> {
+        self.rx
+            .await
+            .unwrap_or_else(|_| Err(AppError::internal("job ended without producing a result")))
+    }
+}
+
 impl Jobs {
     pub fn new(events: EventBus, clock: Arc<dyn Clock>) -> Self {
         Self {
@@ -61,7 +90,82 @@ impl Jobs {
         F: FnOnce(JobContext) -> Fut + Send + 'static,
         Fut: Future<Output = Result<()>> + Send + 'static,
     {
-        let kind = kind.into();
+        let (id, _result) = self
+            .spawn_core(kind.into(), false, body)
+            .expect("spawn without exclusivity never fails");
+        id
+    }
+
+    /// Like [`Jobs::spawn`], but refuses to start if a job of the same `kind` is
+    /// already running.
+    ///
+    /// `Jobs` has no other notion of "only one at a time": exclusivity is scoped to
+    /// `kind`, not the whole registry, and a caller submitting a duplicate request
+    /// (the user double-clicking "run", a retry racing the original) gets a clear
+    /// error back instead of two jobs quietly running at once.
+    pub fn spawn_exclusive<F, Fut>(&self, kind: impl Into<String>, body: F) -> Result<JobId>
+    where
+        F: FnOnce(JobContext) -> Fut + Send + 'static,
+        Fut: Future<Output = Result<()>> + Send + 'static,
+    {
+        self.spawn_core(kind.into(), true, body)
+            .map(|(id, _result)| id)
+    }
+
+    /// Like [`Jobs::spawn`], but the body returns a value the caller can wait for.
+    ///
+    /// `Job` (what [`Jobs::get`]/[`Jobs::list`] return) is deliberately kind-agnostic
+    /// and IPC-safe — a status enum, progress, an error string — with no slot for a
+    /// typed result. A caller that needs the job's own output (an audit report, an
+    /// export path) rather than just knowing it finished awaits the returned
+    /// [`JobResult`] instead of polling or subscribing to events.
+    pub fn spawn_awaitable<F, Fut, T>(
+        &self,
+        kind: impl Into<String>,
+        body: F,
+    ) -> (JobId, JobResult<T>)
+    where
+        F: FnOnce(JobContext) -> Fut + Send + 'static,
+        Fut: Future<Output = Result<T>> + Send + 'static,
+        T: Send + 'static,
+    {
+        let (id, result) = self
+            .spawn_core(kind.into(), false, body)
+            .expect("spawn_awaitable without exclusivity never fails");
+        (id, result)
+    }
+
+    /// [`Jobs::spawn_exclusive`] and [`Jobs::spawn_awaitable`] combined: only one job
+    /// of this `kind` at a time, and the caller can wait for its return value.
+    pub fn spawn_exclusive_awaitable<F, Fut, T>(
+        &self,
+        kind: impl Into<String>,
+        body: F,
+    ) -> Result<(JobId, JobResult<T>)>
+    where
+        F: FnOnce(JobContext) -> Fut + Send + 'static,
+        Fut: Future<Output = Result<T>> + Send + 'static,
+        T: Send + 'static,
+    {
+        self.spawn_core(kind.into(), true, body)
+    }
+
+    /// Shared machinery behind all four `spawn*` methods.
+    ///
+    /// One critical section does the exclusivity check and the registry insert
+    /// together — checking and inserting under separate locks would let two
+    /// `spawn_exclusive` calls race each other between the check and the insert.
+    fn spawn_core<F, Fut, T>(
+        &self,
+        kind: String,
+        exclusive: bool,
+        body: F,
+    ) -> Result<(JobId, JobResult<T>)>
+    where
+        F: FnOnce(JobContext) -> Fut + Send + 'static,
+        Fut: Future<Output = Result<T>> + Send + 'static,
+        T: Send + 'static,
+    {
         let job = Job::queued(kind.clone(), self.clock.now());
         let id = job.id.clone();
         let cancel = CancellationToken::new();
@@ -71,6 +175,18 @@ impl Jobs {
                 .inner
                 .write()
                 .unwrap_or_else(|error| error.into_inner());
+
+            if exclusive
+                && inner
+                    .entries
+                    .values()
+                    .any(|entry| entry.job.kind == kind && !entry.job.status.is_terminal())
+            {
+                return Err(AppError::validation(format!(
+                    "a '{kind}' job is already running"
+                )));
+            }
+
             let sequence = inner.next_sequence;
             inner.next_sequence += 1;
             inner.entries.insert(
@@ -84,6 +200,7 @@ impl Jobs {
             );
         }
 
+        let (tx, rx) = tokio::sync::oneshot::channel();
         let registry = self.clone();
         let context = JobContext::new(id.clone(), registry.clone(), cancel.clone());
         let started_id = id.clone();
@@ -95,18 +212,34 @@ impl Jobs {
             // a JoinError we can record.
             let outcome = tokio::spawn(async move { body(context).await }).await;
 
-            let status_and_error = match outcome {
-                Ok(Ok(())) if cancel.is_cancelled() => (JobStatus::Cancelled, None),
-                Ok(Ok(())) => (JobStatus::Succeeded, None),
-                Ok(Err(error)) => (JobStatus::Failed, Some(error.to_string())),
-                Err(join_error) if join_error.is_cancelled() => (JobStatus::Cancelled, None),
-                Err(_) => (JobStatus::Failed, Some("the job panicked".to_owned())),
-            };
+            let (status, error_message, result): (JobStatus, Option<String>, Result<T>) =
+                match outcome {
+                    Ok(Ok(value)) if cancel.is_cancelled() => {
+                        (JobStatus::Cancelled, None, Ok(value))
+                    }
+                    Ok(Ok(value)) => (JobStatus::Succeeded, None, Ok(value)),
+                    Ok(Err(error)) => {
+                        let message = error.to_string();
+                        (JobStatus::Failed, Some(message), Err(error))
+                    }
+                    Err(join_error) if join_error.is_cancelled() => (
+                        JobStatus::Cancelled,
+                        None,
+                        Err(AppError::internal("job cancelled")),
+                    ),
+                    Err(_) => (
+                        JobStatus::Failed,
+                        Some("the job panicked".to_owned()),
+                        Err(AppError::internal("the job panicked")),
+                    ),
+                };
 
-            registry.mark_finished(&started_id, kind, status_and_error.0, status_and_error.1);
+            registry.mark_finished(&started_id, kind, status, error_message);
+            // No one has to await a JobResult — dropping the receiver is fine.
+            let _ = tx.send(result);
         });
 
-        id
+        Ok((id.clone(), JobResult { id, rx }))
     }
 
     pub async fn get(&self, id: &JobId) -> Option<Job> {

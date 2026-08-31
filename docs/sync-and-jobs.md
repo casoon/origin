@@ -116,6 +116,33 @@ let id = jobs.spawn("export", |ctx| async move {
 - **Jobs are process-local** (ADR-0020). Nothing survives a restart, and nothing pretends
   to.
 
+`spawn` alone is fire-and-forget: nothing stops two callers from starting the same kind
+of work twice, and `Job` — deliberately kind-agnostic and IPC-safe — has no slot for a
+typed result. Three more entry points cover what `spawn` cannot:
+
+```rust
+// Only one "crawl" job may run at a time; a second attempt is a validation error.
+jobs.spawn_exclusive("crawl", |ctx| async move { .. })?;
+
+// The caller gets back what the body returned, not just a status.
+let (_id, result) = jobs.spawn_awaitable("render", |ctx| async move {
+    Ok(report)
+});
+let report = result.wait().await?;
+
+// Both at once — the common shape for a request/response command handler that starts
+// long-running work and needs its result synchronously, rather than polling `Jobs::get`
+// or subscribing to progress events.
+let (_id, result) = jobs.spawn_exclusive_awaitable("crawl", |ctx| async move {
+    Ok(report)
+})?;
+let report = result.wait().await?;
+```
+
+`spawn_exclusive`'s exclusivity is scoped to `kind`; jobs of a different kind are
+unaffected. A `JobResult<T>` is process-local like everything else here — it has nothing
+to do with the shared `Job` record, and dropping it without calling `wait()` is fine.
+
 ## Where the state lives
 
 Sync state is stored under the account prefix (ADR-0019):

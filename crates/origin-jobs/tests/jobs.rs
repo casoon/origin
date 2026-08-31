@@ -263,3 +263,95 @@ async fn running_jobs_are_listed_separately_from_finished_ones() {
 
     jobs.cancel(&slow).await.unwrap();
 }
+
+#[tokio::test]
+async fn spawn_exclusive_refuses_a_second_job_of_the_same_kind() {
+    let (jobs, _) = jobs();
+
+    let _first = jobs
+        .spawn_exclusive("crawl", |ctx| async move {
+            ctx.cancelled().await;
+            Ok(())
+        })
+        .unwrap();
+
+    let error = jobs
+        .spawn_exclusive("crawl", |_ctx| async { Ok(()) })
+        .unwrap_err();
+    assert_eq!(error.kind(), origin_domain::ErrorKind::Validation);
+
+    // A different kind is unaffected by the exclusivity of "crawl".
+    jobs.spawn_exclusive("export", |_ctx| async { Ok(()) })
+        .unwrap();
+}
+
+#[tokio::test]
+async fn spawn_exclusive_allows_a_new_job_once_the_first_finished() {
+    let (jobs, _) = jobs();
+
+    let first = jobs
+        .spawn_exclusive("crawl", |_ctx| async { Ok(()) })
+        .unwrap();
+
+    let probe = jobs.clone();
+    eventually("the first job to finish", || {
+        let jobs = probe.clone();
+        let id = first.clone();
+        async move {
+            jobs.get(&id)
+                .await
+                .is_some_and(|job| job.status.is_terminal())
+        }
+    })
+    .await;
+
+    jobs.spawn_exclusive("crawl", |_ctx| async { Ok(()) })
+        .expect("a finished job does not hold the exclusivity lock");
+}
+
+#[tokio::test]
+async fn spawn_awaitable_returns_the_bodys_value() {
+    let (jobs, _) = jobs();
+
+    let (_id, result) = jobs.spawn_awaitable("render", |_ctx| async { Ok(42u32) });
+
+    assert_eq!(result.wait().await.unwrap(), 42);
+}
+
+#[tokio::test]
+async fn spawn_awaitable_surfaces_the_bodys_error() {
+    let (jobs, _) = jobs();
+
+    let (_id, result) = jobs.spawn_awaitable("render", |_ctx: origin_jobs::JobContext| async {
+        Err::<u32, _>(origin_domain::AppError::storage("disk full"))
+    });
+
+    let error = result.wait().await.unwrap_err();
+    assert!(error.to_string().contains("disk full"));
+}
+
+#[tokio::test]
+async fn spawn_exclusive_awaitable_combines_both() {
+    let (jobs, _) = jobs();
+
+    let (_id, first) = jobs
+        .spawn_exclusive_awaitable("crawl", |ctx| async move {
+            ctx.cancelled().await;
+            Ok::<_, origin_domain::AppError>("first".to_string())
+        })
+        .unwrap();
+
+    let conflict = jobs.spawn_exclusive_awaitable::<_, _, ()>("crawl", |_ctx| async { Ok(()) });
+    assert!(conflict.is_err(), "a second 'crawl' must be refused");
+
+    jobs.cancel(first.id()).await.unwrap();
+    assert_eq!(first.wait().await.unwrap(), "first");
+
+    // Now that it finished, the kind is free again.
+    let (_id, second) = jobs
+        .spawn_exclusive_awaitable("crawl", |_ctx| async {
+            Ok::<_, origin_domain::AppError>("second".to_string())
+        })
+        .unwrap();
+    assert_eq!(second.wait().await.unwrap(), "second");
+}

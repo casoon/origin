@@ -126,6 +126,12 @@ platform.jobs.spawn("export", |ctx| async move {
 
 Progress and cancellation are already wired to the UI.
 
+Need only one running at a time, or the result back directly instead of polling —
+a request/response command handler starting a crawl and returning its report, say?
+`platform.jobs.spawn_exclusive`, `spawn_awaitable`, and `spawn_exclusive_awaitable`
+cover that; see [docs/sync-and-jobs.md](../../../docs/sync-and-jobs.md) in Origin itself
+for all three.
+
 ## Reacting to things
 
 Need a result now? Call the service. Might several independent parts react? Publish a
