@@ -1,4 +1,4 @@
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use rusqlite::Connection;
 
 /// Schema version this build expects. Bump it together with a new migration below.

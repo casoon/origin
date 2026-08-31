@@ -1,6 +1,6 @@
 use crate::SyncTarget;
 use async_trait::async_trait;
-use origin_core::{Result, SyncId, SyncState};
+use origin_domain::{Result, SyncId, SyncState};
 use std::fmt::Debug;
 use tokio_util::sync::CancellationToken;
 

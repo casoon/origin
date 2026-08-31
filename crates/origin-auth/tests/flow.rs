@@ -5,8 +5,8 @@
 
 use origin_auth::testing::FakeRedirectListener;
 use origin_auth::{AccessTokenProvider, AuthorizationFlow, OAuthConfig, TokenStore};
-use origin_core::testing::FakeClock;
-use origin_core::{AccountId, Clock, ConnectorId, ErrorKind};
+use origin_domain::testing::FakeClock;
+use origin_domain::{AccountId, Clock, ConnectorId, ErrorKind};
 use origin_http::testing::MockHttpClient;
 use origin_platform::testing::RecordingOpener;
 use origin_secrets::MemorySecretStore;

@@ -4,7 +4,7 @@ use crate::platform::Platform;
 use origin_accounts::{AccountService, AccountStore};
 use origin_auth::TokenStore;
 use origin_connector::{Connector, ConnectorRegistry};
-use origin_core::{AppError, Clock, SystemClock};
+use origin_domain::{AppError, Clock, SystemClock};
 use origin_events::EventBus;
 use origin_http::HttpClient;
 use origin_jobs::Jobs;
@@ -200,7 +200,7 @@ impl ApplicationBuilder {
 mod tests {
     use super::*;
     use crate::ModuleRegistry;
-    use origin_core::Result;
+    use origin_domain::Result;
 
     #[derive(Debug)]
     struct Counter(u32);
@@ -268,7 +268,7 @@ mod tests {
 
         let error = app.platform().http().unwrap_err();
 
-        assert_eq!(error.kind(), origin_core::ErrorKind::Configuration);
+        assert_eq!(error.kind(), origin_domain::ErrorKind::Configuration);
         assert!(error.to_string().contains("http_client"), "got: {error}");
     }
 
@@ -279,14 +279,14 @@ mod tests {
         // Capabilities are absent, not disabled: nothing can turn this on at runtime.
         assert_eq!(
             app.platform().opener().unwrap_err().kind(),
-            origin_core::ErrorKind::Permission
+            origin_domain::ErrorKind::Permission
         );
     }
 
     #[test]
     fn registered_connectors_are_resolvable_and_unknown_ones_are_not() {
         use origin_connector::{AuthKind, Connector, ConnectorDescriptor};
-        use origin_core::{AccountId, ConnectorId};
+        use origin_domain::{AccountId, ConnectorId};
 
         #[derive(Debug)]
         struct TestConnector;

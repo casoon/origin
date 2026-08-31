@@ -7,16 +7,19 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "desktop", "ipc", "tray"]
+categories = ["gui", "os"]
 
 [features]
 default = []
-ts = ["dep:ts-rs", "origin-app/ts", "origin-core/ts", "origin-connector/ts", "origin-sync/ts"]
+ts = ["dep:ts-rs", "origin-app/ts", "origin-domain/ts", "origin-connector/ts", "origin-sync/ts"]
 
 [dependencies]
 origin-accounts = { workspace = true }
 origin-app = { workspace = true }
 origin-connector = { workspace = true }
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 origin-events = { workspace = true }
 origin-http = { workspace = true }
 origin-jobs = { workspace = true }

@@ -1,7 +1,7 @@
 //! The transport, over an in-memory pipe.
 
 use async_trait::async_trait;
-use origin_core::Result;
+use origin_domain::Result;
 use origin_mcp::{AiPermission, AiPermissions, McpServer, Tool, ToolDescriptor, ToolOutput};
 use serde_json::Value;
 use std::sync::Arc;

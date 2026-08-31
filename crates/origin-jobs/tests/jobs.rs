@@ -1,5 +1,5 @@
-use origin_core::testing::FakeClock;
-use origin_core::{Clock, JobStatus};
+use origin_domain::testing::FakeClock;
+use origin_domain::{Clock, JobStatus};
 use origin_events::{EventBus, PlatformEvent};
 use origin_jobs::Jobs;
 use std::sync::Arc;
@@ -72,7 +72,7 @@ async fn a_failing_job_records_the_error() {
     let (jobs, _) = jobs();
 
     let id = jobs.spawn("export", |_ctx| async {
-        Err(origin_core::AppError::storage("disk full"))
+        Err(origin_domain::AppError::storage("disk full"))
     });
 
     let probe = jobs.clone();
@@ -166,11 +166,11 @@ async fn cancelling_an_unknown_job_is_a_validation_error() {
     let (jobs, _) = jobs();
 
     let error = jobs
-        .cancel(&origin_core::JobId::new("nope"))
+        .cancel(&origin_domain::JobId::new("nope"))
         .await
         .unwrap_err();
 
-    assert_eq!(error.kind(), origin_core::ErrorKind::Validation);
+    assert_eq!(error.kind(), origin_domain::ErrorKind::Validation);
 }
 
 #[tokio::test]

@@ -1,6 +1,6 @@
 use origin_accounts::AccountService;
 use origin_connector::ConnectorRegistry;
-use origin_core::{AppError, Clock, Result};
+use origin_domain::{AppError, Clock, Result};
 use origin_events::EventBus;
 use origin_http::HttpClient;
 use origin_jobs::Jobs;

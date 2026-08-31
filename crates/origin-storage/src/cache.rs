@@ -1,5 +1,5 @@
 use crate::{Record, Storage, StorageKey};
-use origin_core::{AppError, Clock, Result};
+use origin_domain::{AppError, Clock, Result};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::sync::Arc;
@@ -68,7 +68,7 @@ impl Cache {
 mod tests {
     use super::*;
     use crate::MemoryStorage;
-    use origin_core::testing::FakeClock;
+    use origin_domain::testing::FakeClock;
     use time::macros::datetime;
 
     fn cache() -> (Cache, Arc<FakeClock>) {
@@ -123,6 +123,6 @@ mod tests {
         cache.put(&key, &"not-a-number", None).await.unwrap();
 
         let error = cache.get::<u32>(&key).await.unwrap_err();
-        assert_eq!(error.kind(), origin_core::ErrorKind::Storage);
+        assert_eq!(error.kind(), origin_domain::ErrorKind::Storage);
     }
 }

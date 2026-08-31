@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use origin_core::Result;
+use origin_domain::Result;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use time::OffsetDateTime;

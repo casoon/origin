@@ -33,7 +33,7 @@ ORIGIN PLATFORM        crates/origin-{events,secrets,settings,storage,http,auth,
                        accounts,connector,sync,jobs,mcp,ai,telemetry,app}
 TOOLING                crates/origin-{manifest,xtask} — build time, not runtime
   ↓
-PLATFORM CONTRACTS     crates/origin-platform, crates/origin-core (ports)
+PLATFORM CONTRACTS     crates/origin-platform, crates/origin-domain (ports)
   ↓
 TAURI HOST             host/origin-tauri, adapters/origin-*-tauri
 ```

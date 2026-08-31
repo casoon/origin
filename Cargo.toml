@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/origin-core",
+    "crates/origin-domain",
     "crates/origin-events",
     "crates/origin-platform",
     "crates/origin-secrets",
@@ -40,7 +40,7 @@ authors = ["Jörn Seidel <joern.seidel@casoon.de>"]
 
 [workspace.dependencies]
 # --- platform crates (contracts + mechanisms) ---
-origin-core = { path = "crates/origin-core", version = "0.1.0" }
+origin-domain = { path = "crates/origin-domain", version = "0.1.0" }
 origin-events = { path = "crates/origin-events", version = "0.1.0" }
 origin-platform = { path = "crates/origin-platform", version = "0.1.0" }
 origin-secrets = { path = "crates/origin-secrets", version = "0.1.0" }

@@ -4,7 +4,7 @@
 //! them on the same bus.
 
 use crate::bus::Event;
-use origin_core::{AccountId, Alert, AlertId, ConnectorId, ErrorKind, JobId, JobStatus, SyncId};
+use origin_domain::{AccountId, Alert, AlertId, ConnectorId, ErrorKind, JobId, JobStatus, SyncId};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 

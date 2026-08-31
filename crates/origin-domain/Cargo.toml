@@ -1,5 +1,5 @@
 [package]
-name = "origin-core"
+name = "origin-domain"
 description = "Origin domain primitives and platform ports. Knows no product, no Tauri, no storage engine."
 version.workspace = true
 edition.workspace = true
@@ -7,6 +7,9 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "hexagonal", "ports-and-adapters", "domain"]
+categories = ["rust-patterns"]
 
 [features]
 default = []

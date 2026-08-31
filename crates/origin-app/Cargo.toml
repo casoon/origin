@@ -7,16 +7,19 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "service-registry", "composition-root", "modules"]
+categories = ["rust-patterns"]
 
 [features]
 default = []
-ts = ["dep:ts-rs", "origin-core/ts", "origin-sync/ts"]
+ts = ["dep:ts-rs", "origin-domain/ts", "origin-sync/ts"]
 
 [dependencies]
 origin-accounts = { workspace = true }
 origin-auth = { workspace = true }
 origin-connector = { workspace = true }
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 origin-events = { workspace = true }
 origin-http = { workspace = true }
 origin-jobs = { workspace = true }
@@ -32,7 +35,7 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 async-trait = { workspace = true }
-origin-core = { workspace = true, features = ["testing"] }
+origin-domain = { workspace = true, features = ["testing"] }
 origin-platform = { workspace = true, features = ["testing"] }
 time = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

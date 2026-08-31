@@ -7,12 +7,15 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "keyring", "credentials", "secrets"]
+categories = ["authentication", "os"]
 
 [dependencies]
 async-trait = { workspace = true }
 # The default `v1` feature picks Keychain / Credential Manager / Secret Service per platform.
 keyring = { workspace = true }
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 origin-secrets = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

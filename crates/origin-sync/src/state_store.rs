@@ -1,5 +1,5 @@
 use crate::SyncTarget;
-use origin_core::{AppError, Clock, Result, SyncState};
+use origin_domain::{AppError, Clock, Result, SyncState};
 use origin_storage::{Record, Storage, StorageKey};
 use std::sync::Arc;
 

@@ -1,5 +1,5 @@
 use crate::context::JobContext;
-use origin_core::{AppError, Clock, Job, JobId, JobStatus, Progress, Result};
+use origin_domain::{AppError, Clock, Job, JobId, JobStatus, Progress, Result};
 use origin_events::{EventBus, JobFinished, JobProgress, JobStarted, PlatformEvent};
 use std::collections::HashMap;
 use std::future::Future;

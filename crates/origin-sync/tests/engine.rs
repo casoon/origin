@@ -1,8 +1,8 @@
 //! Scheduling behaviour, tested by moving a fake clock rather than by sleeping.
 
 use async_trait::async_trait;
-use origin_core::testing::FakeClock;
-use origin_core::{
+use origin_domain::testing::FakeClock;
+use origin_domain::{
     AccountId, AppError, Clock, ConnectorId, ErrorKind, Health, Result, SyncOutcome,
 };
 use origin_events::{EventBus, PlatformEvent};

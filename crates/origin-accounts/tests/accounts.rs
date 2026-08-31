@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use origin_accounts::{AccountService, AccountStore};
 use origin_auth::{TokenSet, TokenStore};
-use origin_core::testing::FakeClock;
-use origin_core::{AccountStatus, AppError, Clock, ConnectorId, Result};
+use origin_domain::testing::FakeClock;
+use origin_domain::{AccountStatus, AppError, Clock, ConnectorId, Result};
 use origin_events::{EventBus, PlatformEvent};
 use origin_secrets::{MemorySecretStore, Secret, SecretKey, SecretStore};
 use origin_storage::{MemoryStorage, Record, Storage, StorageKey, namespace};
@@ -269,11 +269,11 @@ async fn disconnecting_an_unknown_account_is_a_validation_error() {
 
     let error = harness
         .service
-        .disconnect(&origin_core::AccountId::new("nope"))
+        .disconnect(&origin_domain::AccountId::new("nope"))
         .await
         .unwrap_err();
 
-    assert_eq!(error.kind(), origin_core::ErrorKind::Validation);
+    assert_eq!(error.kind(), origin_domain::ErrorKind::Validation);
 }
 
 #[tokio::test]

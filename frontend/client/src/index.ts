@@ -16,7 +16,7 @@ import type {
   SyncTarget,
 } from "./types";
 
-export { command, onPlatformEvent } from "./transport";
+export { command, onEvent, onPlatformEvent } from "./transport";
 export { OriginError, toOriginError } from "./errors";
 export type * from "./types";
 

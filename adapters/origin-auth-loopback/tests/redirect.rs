@@ -2,7 +2,7 @@
 
 use origin_auth::RedirectListener;
 use origin_auth_loopback::LoopbackRedirect;
-use origin_core::ErrorKind;
+use origin_domain::ErrorKind;
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;

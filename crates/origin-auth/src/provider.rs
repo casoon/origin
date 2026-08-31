@@ -1,5 +1,5 @@
 use crate::{AuthorizationFlow, TokenSet, TokenStore};
-use origin_core::{AccountId, AppError, Clock, ConnectorId, Result};
+use origin_domain::{AccountId, AppError, Clock, ConnectorId, Result};
 use origin_secrets::Secret;
 use std::sync::Arc;
 use time::Duration;
@@ -108,7 +108,7 @@ impl AccessTokenProvider {
             Ok(refreshed) => refreshed,
             Err(error) => {
                 // A rejected refresh token is final: keeping it would retry forever.
-                if error.kind() == origin_core::ErrorKind::Authentication {
+                if error.kind() == origin_domain::ErrorKind::Authentication {
                     tracing::warn!(%account, "refresh token rejected, discarding credentials");
                     self.tokens.delete(&self.connector, account).await?;
                 }

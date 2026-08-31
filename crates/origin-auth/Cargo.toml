@@ -7,6 +7,9 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["oauth2", "pkce", "authentication", "tauri"]
+categories = ["authentication", "web-programming"]
 
 [features]
 default = []
@@ -16,7 +19,7 @@ testing = []
 async-trait = { workspace = true }
 base64 = { workspace = true }
 getrandom = { workspace = true }
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 origin-http = { workspace = true }
 origin-platform = { workspace = true }
 origin-secrets = { workspace = true }
@@ -29,7 +32,7 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 origin-auth = { path = ".", features = ["testing"] }
-origin-core = { workspace = true, features = ["testing"] }
+origin-domain = { workspace = true, features = ["testing"] }
 origin-http = { workspace = true, features = ["testing"] }
 origin-platform = { workspace = true, features = ["testing"] }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

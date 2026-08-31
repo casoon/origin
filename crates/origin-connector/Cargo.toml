@@ -7,14 +7,17 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "connector", "integration", "contract"]
+categories = ["api-bindings", "rust-patterns"]
 
 [features]
 default = []
-ts = ["dep:ts-rs", "origin-core/ts"]
+ts = ["dep:ts-rs", "origin-domain/ts"]
 
 [dependencies]
 async-trait = { workspace = true }
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 serde = { workspace = true }
 ts-rs = { workspace = true, optional = true }
 

@@ -1,5 +1,5 @@
 use crate::ACCOUNTS_NAMESPACE;
-use origin_core::{Account, AccountId, AppError, Clock, ConnectorId, Result};
+use origin_domain::{Account, AccountId, AppError, Clock, ConnectorId, Result};
 use origin_storage::{Record, Storage, StorageKey};
 use std::sync::Arc;
 

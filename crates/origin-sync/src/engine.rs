@@ -1,7 +1,7 @@
 use crate::source::{SyncContext, SyncResult, SyncSource};
 use crate::state_store::SyncStateStore;
 use crate::{SyncPolicy, SyncTarget, health_of};
-use origin_core::{
+use origin_domain::{
     AccountId, AppError, Clock, ConnectorId, ErrorKind, Health, Result, SyncId, SyncOutcome,
     SyncState,
 };

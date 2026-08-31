@@ -7,6 +7,9 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "platform", "os-abstraction", "notifications"]
+categories = ["os", "rust-patterns"]
 
 [features]
 default = []
@@ -14,7 +17,7 @@ testing = []
 
 [dependencies]
 async-trait = { workspace = true }
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

@@ -1,7 +1,7 @@
 //! The boundary: what an external AI can see and invoke, and what it cannot.
 
 use async_trait::async_trait;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use origin_mcp::{AiPermission, AiPermissions, McpServer, Tool, ToolDescriptor, ToolOutput};
 use serde_json::{Value, json};
 use std::sync::Arc;

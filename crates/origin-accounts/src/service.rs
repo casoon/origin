@@ -1,6 +1,6 @@
 use crate::store::AccountStore;
 use origin_auth::{TokenSet, TokenStore};
-use origin_core::{Account, AccountId, AccountStatus, AppError, Clock, ConnectorId, Result};
+use origin_domain::{Account, AccountId, AccountStatus, AppError, Clock, ConnectorId, Result};
 use origin_events::{AccountExpired, EventBus, PlatformEvent};
 use origin_storage::{Storage, namespace};
 use std::sync::Arc;

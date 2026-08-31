@@ -1,4 +1,4 @@
-use origin_core::{ConnectorId, ProductPermission};
+use origin_domain::{ConnectorId, ProductPermission};
 use serde::{Deserialize, Serialize};
 
 /// How a connector authenticates.

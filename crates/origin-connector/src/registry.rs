@@ -1,5 +1,5 @@
 use crate::Connector;
-use origin_core::{AppError, ConnectorId, Result};
+use origin_domain::{AppError, ConnectorId, Result};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 

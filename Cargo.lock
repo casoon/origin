@@ -2899,7 +2899,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "origin-auth",
- "origin-core",
+ "origin-domain",
  "origin-events",
  "origin-secrets",
  "origin-storage",
@@ -2916,7 +2916,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "origin-ai",
- "origin-core",
+ "origin-domain",
  "serde",
  "tokio",
  "tracing",
@@ -2930,7 +2930,7 @@ dependencies = [
  "origin-accounts",
  "origin-auth",
  "origin-connector",
- "origin-core",
+ "origin-domain",
  "origin-events",
  "origin-http",
  "origin-jobs",
@@ -2955,7 +2955,7 @@ dependencies = [
  "base64 0.23.1",
  "getrandom 0.4.3",
  "origin-auth",
- "origin-core",
+ "origin-domain",
  "origin-http",
  "origin-platform",
  "origin-secrets",
@@ -2973,7 +2973,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "origin-auth",
- "origin-core",
+ "origin-domain",
  "tokio",
  "tracing",
 ]
@@ -2983,21 +2983,10 @@ name = "origin-connector"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "serde",
  "tokio",
  "ts-rs",
-]
-
-[[package]]
-name = "origin-core"
-version = "0.1.0"
-dependencies = [
- "serde",
- "thiserror 2.0.20",
- "time",
- "ts-rs",
- "uuid",
 ]
 
 [[package]]
@@ -3008,7 +2997,7 @@ dependencies = [
  "origin-ai",
  "origin-app",
  "origin-connector",
- "origin-core",
+ "origin-domain",
  "origin-events",
  "origin-mcp",
  "origin-mcp-stdio",
@@ -3031,10 +3020,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "origin-domain"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 2.0.20",
+ "time",
+ "ts-rs",
+ "uuid",
+]
+
+[[package]]
 name = "origin-events"
 version = "0.1.0"
 dependencies = [
- "origin-core",
+ "origin-domain",
  "serde",
  "thiserror 2.0.20",
  "time",
@@ -3048,7 +3048,7 @@ name = "origin-http"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-http",
  "serde",
  "serde_json",
@@ -3062,7 +3062,7 @@ name = "origin-http-reqwest"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-http",
  "reqwest",
  "tokio",
@@ -3073,7 +3073,7 @@ dependencies = [
 name = "origin-jobs"
 version = "0.1.0"
 dependencies = [
- "origin-core",
+ "origin-domain",
  "origin-events",
  "time",
  "tokio",
@@ -3096,7 +3096,7 @@ name = "origin-mcp"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "serde",
  "serde_json",
  "tokio",
@@ -3108,7 +3108,7 @@ name = "origin-mcp-stdio"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-mcp",
  "serde_json",
  "tokio",
@@ -3120,7 +3120,7 @@ name = "origin-notifications-tauri"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-platform",
  "tauri",
  "tauri-plugin-notification",
@@ -3132,7 +3132,7 @@ name = "origin-platform"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-platform",
  "serde",
  "tokio",
@@ -3144,7 +3144,7 @@ name = "origin-secrets"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-secrets",
  "serde",
  "tokio",
@@ -3156,7 +3156,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "keyring",
- "origin-core",
+ "origin-domain",
  "origin-secrets",
  "tokio",
  "tracing",
@@ -3167,7 +3167,7 @@ name = "origin-settings"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-storage",
  "serde",
  "serde_json",
@@ -3181,7 +3181,7 @@ name = "origin-storage"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-storage",
  "serde",
  "serde_json",
@@ -3194,7 +3194,7 @@ name = "origin-storage-sqlite"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-storage",
  "rusqlite",
  "tempfile",
@@ -3208,7 +3208,7 @@ name = "origin-sync"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "origin-core",
+ "origin-domain",
  "origin-events",
  "origin-storage",
  "serde",
@@ -3228,7 +3228,7 @@ dependencies = [
  "origin-accounts",
  "origin-app",
  "origin-connector",
- "origin-core",
+ "origin-domain",
  "origin-events",
  "origin-http",
  "origin-http-reqwest",
@@ -3258,7 +3258,7 @@ dependencies = [
 name = "origin-telemetry"
 version = "0.1.0"
 dependencies = [
- "origin-core",
+ "origin-domain",
  "tracing",
  "tracing-subscriber",
 ]
@@ -3269,7 +3269,7 @@ version = "0.1.0"
 dependencies = [
  "origin-app",
  "origin-connector",
- "origin-core",
+ "origin-domain",
  "origin-events",
  "origin-manifest",
  "origin-sync",

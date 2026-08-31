@@ -5,7 +5,7 @@
 //! same directory independently is how a headless mode ends up looking at an empty
 //! database.
 
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use std::path::PathBuf;
 
 /// Overrides the location entirely. Used by tests, and by anyone running a portable

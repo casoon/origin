@@ -1,5 +1,5 @@
 use crate::Headers;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use serde::Serialize;
 use std::fmt;
 

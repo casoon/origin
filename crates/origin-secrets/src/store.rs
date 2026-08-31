@@ -1,6 +1,6 @@
 use crate::{Secret, SecretKey};
 use async_trait::async_trait;
-use origin_core::Result;
+use origin_domain::Result;
 use std::fmt::Debug;
 
 /// Persistent credential storage.

@@ -9,7 +9,7 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 origin-mcp = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["io-std", "io-util"] }

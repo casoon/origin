@@ -9,7 +9,7 @@
 mod schema;
 
 use async_trait::async_trait;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use origin_storage::{Record, Storage, StorageKey};
 use rusqlite::{Connection, OptionalExtension, params};
 use std::path::Path;

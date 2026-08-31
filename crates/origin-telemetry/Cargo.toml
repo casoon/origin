@@ -7,9 +7,12 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "tracing", "logging", "telemetry"]
+categories = ["development-tools::debugging"]
 
 [dependencies]
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 

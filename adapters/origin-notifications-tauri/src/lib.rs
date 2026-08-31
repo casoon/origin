@@ -4,7 +4,7 @@
 //! place in the notification path that knows Tauri exists (ADR-0001).
 
 use async_trait::async_trait;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use origin_platform::{Notification, NotificationService, Urgency};
 use tauri::{AppHandle, Runtime};
 use tauri_plugin_notification::{NotificationExt, PermissionState};

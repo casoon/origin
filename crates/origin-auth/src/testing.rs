@@ -2,7 +2,7 @@
 
 use crate::redirect::{AuthorizationCode, RedirectListener};
 use async_trait::async_trait;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 
 /// A redirect listener that answers immediately with a canned outcome.
 ///

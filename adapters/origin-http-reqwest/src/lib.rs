@@ -4,7 +4,7 @@
 //! constructing several defeats keep-alive and multiplies open sockets.
 
 use async_trait::async_trait;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use origin_http::{Headers, HttpClient, HttpRequest, HttpResponse};
 use std::time::Duration;
 

@@ -1,7 +1,7 @@
 use crate::redirect::{AuthorizationCode, RedirectListener};
 use crate::token::TokenResponse;
 use crate::{OAuthConfig, Pkce, TokenSet, random_token};
-use origin_core::{AppError, Clock, Result};
+use origin_domain::{AppError, Clock, Result};
 use origin_http::{HttpClient, HttpRequest};
 use origin_platform::Opener;
 use std::sync::Arc;

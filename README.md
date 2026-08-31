@@ -63,7 +63,7 @@ decision lives in [adr/](adr/).
 
 ```text
 crates/            platform crates — never depend on Tauri, never know a product
-  origin-core        error model, domain primitives, Clock port
+  origin-domain      error model, domain primitives, Clock port
   origin-events      typed event bus
   origin-platform    notification and opener contracts
   origin-secrets     SecretStore contract + shared contract test suite

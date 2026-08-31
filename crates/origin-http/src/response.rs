@@ -1,5 +1,5 @@
 use crate::{Headers, RateLimit};
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use serde::de::DeserializeOwned;
 use time::OffsetDateTime;
 
@@ -111,7 +111,7 @@ impl HttpResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use origin_core::ErrorKind;
+    use origin_domain::ErrorKind;
     use time::macros::datetime;
 
     const NOW: OffsetDateTime = datetime!(2026-08-23 10:00 UTC);

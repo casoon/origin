@@ -8,7 +8,7 @@ use crate::pulse::PulseService;
 use async_trait::async_trait;
 use origin_ai::AiService;
 use origin_app::Application;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use origin_mcp::{AiPermission, AiPermissions, McpServer, Tool, ToolDescriptor, ToolOutput};
 use origin_settings::Setting;
 use serde_json::{Value, json};

@@ -1,6 +1,6 @@
 use crate::TokenSet;
 use crate::token::StoredTokenSet;
-use origin_core::{AccountId, AppError, ConnectorId, Result};
+use origin_domain::{AccountId, AppError, ConnectorId, Result};
 use origin_secrets::{Secret, SecretKey, SecretStore};
 use std::sync::Arc;
 

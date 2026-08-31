@@ -5,7 +5,7 @@
 //! without a desktop session.
 
 use origin_app::{ApplicationModule, ModuleRegistry, Platform};
-use origin_core::Result;
+use origin_domain::Result;
 use origin_settings::Setting;
 use std::sync::Arc;
 

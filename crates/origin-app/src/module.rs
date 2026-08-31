@@ -1,5 +1,5 @@
 use crate::Platform;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::fmt;

@@ -1,6 +1,6 @@
 use crate::random_token;
 use base64::Engine as _;
-use origin_core::Result;
+use origin_domain::Result;
 use sha2::{Digest, Sha256};
 
 /// Proof Key for Code Exchange (RFC 7636), S256 only.

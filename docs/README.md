@@ -10,6 +10,7 @@
 | [manifest.md](manifest.md) | app.toml, generated files, security profiles |
 | [ai-integration.md](ai-integration.md) | MCP as a driving adapter, the AI port, AI permissions |
 | [updating.md](updating.md) | `cargo xtask new`, migrations, keeping derivatives current |
+| [publishing.md](publishing.md) | Publishing the `origin-*` crates to crates.io, in order |
 | [testing.md](testing.md) | Contract tests, test doubles, testing without a desktop |
 | [creating-a-module.md](creating-a-module.md) | Add a feature area to an application |
 

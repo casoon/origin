@@ -38,12 +38,12 @@ pub use token::TokenSet;
 ///
 /// Used for the PKCE verifier and the `state` parameter — both must be
 /// unguessable, and both travel in URLs.
-pub(crate) fn random_token(bytes: usize) -> origin_core::Result<String> {
+pub(crate) fn random_token(bytes: usize) -> origin_domain::Result<String> {
     use base64::Engine as _;
 
     let mut buffer = vec![0u8; bytes];
     getrandom::fill(&mut buffer).map_err(|error| {
-        origin_core::AppError::internal(format!("no secure randomness available: {error}"))
+        origin_domain::AppError::internal(format!("no secure randomness available: {error}"))
     })?;
 
     Ok(base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(buffer))

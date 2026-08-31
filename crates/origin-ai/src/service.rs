@@ -1,6 +1,6 @@
 use crate::{Completion, Prompt};
 use async_trait::async_trait;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use std::fmt::Debug;
 
 /// Inference, as a port.

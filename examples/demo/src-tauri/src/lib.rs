@@ -54,7 +54,7 @@ pub fn run() {
 ///
 /// This function *is* the architecture of the product: every dependency the demo has
 /// is visible in these few lines.
-fn build(app: &AppHandle, config: &HostConfig) -> origin_core::Result<Application> {
+fn build(app: &AppHandle, config: &HostConfig) -> origin_domain::Result<Application> {
     let application = ApplicationBuilder::new()
         .storage(defaults::storage(app, config)?)
         .secret_store(defaults::secret_store(config))
@@ -64,7 +64,7 @@ fn build(app: &AppHandle, config: &HostConfig) -> origin_core::Result<Applicatio
         .connector(DemoConnector)
         .module(PulseModule)
         .build()
-        .map_err(|error| origin_core::AppError::configuration(error.to_string()))?;
+        .map_err(|error| origin_domain::AppError::configuration(error.to_string()))?;
 
     Ok(application)
 }
@@ -74,7 +74,7 @@ fn build(app: &AppHandle, config: &HostConfig) -> origin_core::Result<Applicatio
 /// This is the architecture test from §52/§53 of the concept, executed: the same core
 /// that drives the desktop shell also answers an external AI client, and neither knows
 /// about the other.
-pub fn run_mcp() -> origin_core::Result<()> {
+pub fn run_mcp() -> origin_domain::Result<()> {
     // stdout carries the protocol. A single log line there corrupts the stream, and the
     // client reports a parse error that points nowhere near logging.
     origin_telemetry::init(TelemetryConfig {
@@ -83,7 +83,7 @@ pub fn run_mcp() -> origin_core::Result<()> {
     });
 
     let runtime = tokio::runtime::Runtime::new().map_err(|error| {
-        origin_core::AppError::internal(format!("cannot start runtime: {error}"))
+        origin_domain::AppError::internal(format!("cannot start runtime: {error}"))
     })?;
 
     runtime.block_on(async {
@@ -103,7 +103,7 @@ pub fn run_mcp() -> origin_core::Result<()> {
 /// Credentials use an in-memory store here: a headless process started by an AI client
 /// must not raise a keychain prompt nobody is present to answer. A product that needs
 /// real credentials headless has to solve that deliberately.
-fn build_headless() -> origin_core::Result<Application> {
+fn build_headless() -> origin_domain::Result<Application> {
     let path = origin_platform::paths::data_dir(APP_ID)?.join("origin.sqlite3");
 
     ApplicationBuilder::new()
@@ -113,5 +113,5 @@ fn build_headless() -> origin_core::Result<Application> {
         .connector(DemoConnector)
         .module(PulseModule)
         .build()
-        .map_err(|error| origin_core::AppError::configuration(error.to_string()))
+        .map_err(|error| origin_domain::AppError::configuration(error.to_string()))
 }

@@ -6,7 +6,7 @@
 use crate::state::OriginState;
 use origin_app::AppInfo;
 use origin_connector::ConnectorDescriptor;
-use origin_core::{Account, AccountId, AppError, ErrorContract, Health, Job, JobId};
+use origin_domain::{Account, AccountId, AppError, ErrorContract, Health, Job, JobId};
 use origin_sync::{SyncStatus, SyncTarget};
 use serde::Serialize;
 use tauri::{AppHandle, State};

@@ -9,7 +9,7 @@
 
 use async_trait::async_trait;
 use origin_app::{ApplicationModule, ModuleRegistry, Platform};
-use origin_core::{
+use origin_domain::{
     AccountId, Alert, ConnectorId, Health, Metric, MetricKey, Result, Severity, Unit,
 };
 use origin_events::{AlertRaised, AlertResolved, PlatformEvent};
@@ -305,7 +305,7 @@ impl ApplicationModule for PulseModule {
 mod tests {
     use super::*;
     use origin_app::ApplicationBuilder;
-    use origin_core::testing::FakeClock;
+    use origin_domain::testing::FakeClock;
     use origin_platform::testing::RecordingNotificationService;
     use time::macros::datetime;
     use ts_rs::{Config, TS};

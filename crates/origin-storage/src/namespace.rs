@@ -20,7 +20,7 @@
 //!
 //! [`Storage::clear_prefix`]: crate::Storage::clear_prefix
 
-use origin_core::{AccountId, ConnectorId};
+use origin_domain::{AccountId, ConnectorId};
 
 /// Namespace for platform-owned data.
 pub fn platform(area: &str) -> String {

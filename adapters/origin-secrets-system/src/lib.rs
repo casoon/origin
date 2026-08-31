@@ -11,7 +11,7 @@
 
 use async_trait::async_trait;
 use keyring::Entry;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use origin_secrets::{Secret, SecretKey, SecretStore};
 
 /// System credential store, scoped to one application.

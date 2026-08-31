@@ -14,7 +14,7 @@ testing = []
 
 [dependencies]
 async-trait = { workspace = true }
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }
 

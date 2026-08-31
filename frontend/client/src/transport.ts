@@ -31,3 +31,20 @@ export async function onPlatformEvent(
 ): Promise<UnlistenFn> {
   return listen<PlatformEvent>(PLATFORM_EVENT, (event) => handler(event.payload));
 }
+
+/**
+ * Subscribe to a product-specific window event emitted directly via `app.emit(...)`
+ * on the Rust side (as opposed to a typed [`PlatformEvent`] published on the event bus
+ * and forwarded through {@link onPlatformEvent}).
+ *
+ * Products with their own long-running, high-frequency progress reporting (a crawl, an
+ * import) that does not fit the platform's job/event model still need a transport —
+ * this keeps that need from forcing a direct `@tauri-apps/api` import into a view
+ * (ADR-0010). The returned function unsubscribes; call it from a component teardown.
+ */
+export async function onEvent<T>(
+  name: string,
+  handler: (payload: T) => void,
+): Promise<UnlistenFn> {
+  return listen<T>(name, (event) => handler(event.payload));
+}

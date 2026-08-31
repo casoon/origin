@@ -2,7 +2,7 @@
 
 use crate::{Notification, NotificationService, Opener};
 use async_trait::async_trait;
-use origin_core::Result;
+use origin_domain::Result;
 use std::sync::Mutex;
 
 /// Records notifications instead of showing them, so tests can assert on what the

@@ -1,6 +1,6 @@
 use crate::{Secret, SecretKey, SecretStore};
 use async_trait::async_trait;
-use origin_core::Result;
+use origin_domain::Result;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 

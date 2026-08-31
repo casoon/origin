@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use origin_core::Result;
+use origin_domain::Result;
 use std::fmt::Debug;
 
 /// Opens a URL in the user's browser.

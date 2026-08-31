@@ -7,11 +7,14 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "xtask", "scaffolding", "code-generation"]
+categories = ["development-tools::build-utils", "development-tools::cargo-plugins"]
 
 [dependencies]
 origin-app = { workspace = true, features = ["ts"] }
 origin-connector = { workspace = true, features = ["ts"] }
-origin-core = { workspace = true, features = ["ts"] }
+origin-domain = { workspace = true, features = ["ts"] }
 origin-events = { workspace = true, features = ["ts"] }
 origin-manifest = { workspace = true }
 origin-sync = { workspace = true, features = ["ts"] }

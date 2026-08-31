@@ -7,10 +7,13 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "accounts", "multi-account", "credentials"]
+categories = ["authentication"]
 
 [dependencies]
 origin-auth = { workspace = true }
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 origin-events = { workspace = true }
 origin-storage = { workspace = true }
 serde = { workspace = true }
@@ -19,7 +22,7 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 async-trait = { workspace = true }
-origin-core = { workspace = true, features = ["testing"] }
+origin-domain = { workspace = true, features = ["testing"] }
 origin-storage = { workspace = true }
 origin-secrets = { workspace = true }
 time = { workspace = true }

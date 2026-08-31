@@ -38,12 +38,12 @@ pub fn run() {
 /// This function is the architecture of the product: every dependency it has is
 /// visible here. Add a `.connector(...)` when you integrate a service, a `.module(...)`
 /// for each feature area.
-fn build(app: &AppHandle, config: &HostConfig) -> origin_core::Result<Application> {
+fn build(app: &AppHandle, config: &HostConfig) -> origin_domain::Result<Application> {
     ApplicationBuilder::new()
         .storage(defaults::storage(app, config)?)
         .secret_store(defaults::secret_store(config))
         .notifications(defaults::notifications(app))
         .module(ExampleModule)
         .build()
-        .map_err(|error| origin_core::AppError::configuration(error.to_string()))
+        .map_err(|error| origin_domain::AppError::configuration(error.to_string()))
 }

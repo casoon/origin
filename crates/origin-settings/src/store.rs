@@ -1,6 +1,6 @@
 use crate::SETTINGS_NAMESPACE;
 use async_trait::async_trait;
-use origin_core::{Clock, Result};
+use origin_domain::{Clock, Result};
 use origin_storage::{Record, Storage, StorageKey};
 use std::fmt::Debug;
 use std::sync::Arc;

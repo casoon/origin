@@ -10,7 +10,7 @@ license = "MIT"
 
 [workspace.dependencies]
 origin-app = "__ORIGIN_SEMVER__"
-origin-core = "__ORIGIN_SEMVER__"
+origin-domain = "__ORIGIN_SEMVER__"
 origin-platform = "__ORIGIN_SEMVER__"
 origin-settings = "__ORIGIN_SEMVER__"
 origin-storage = "__ORIGIN_SEMVER__"

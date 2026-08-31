@@ -16,7 +16,7 @@ tauri-build = { workspace = true }
 
 [dependencies]
 origin-app = { workspace = true }
-origin-core = { workspace = true }
+origin-domain = { workspace = true }
 origin-platform = { workspace = true }
 origin-settings = { workspace = true }
 origin-storage = { workspace = true }
@@ -30,7 +30,7 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
-origin-core = { workspace = true, features = ["testing"] }
+origin-domain = { workspace = true, features = ["testing"] }
 origin-platform = { workspace = true, features = ["testing"] }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 

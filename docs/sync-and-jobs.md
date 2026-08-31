@@ -84,7 +84,7 @@ is a pure function, and jitter is otherwise untestable.
 ## Health
 
 `health_of(state, policy, now)` turns sync bookkeeping into the shared
-[`Health`](../crates/origin-core/src/health.rs) model. It is not a method on `SyncState`
+[`Health`](../crates/origin-domain/src/health.rs) model. It is not a method on `SyncState`
 because what counts as healthy depends on the cadence, and only the policy knows that.
 
 A target that quietly stopped running is reported as `Warning`, not `Healthy` — silence

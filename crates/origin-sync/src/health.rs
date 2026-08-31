@@ -1,5 +1,5 @@
 use crate::{SyncPolicy, SyncTarget};
-use origin_core::{Health, SyncState};
+use origin_domain::{Health, SyncState};
 use serde::Serialize;
 use time::OffsetDateTime;
 
@@ -54,7 +54,7 @@ pub fn health_of(state: &SyncState, policy: &SyncPolicy, now: OffsetDateTime) ->
 #[cfg(test)]
 mod tests {
     use super::*;
-    use origin_core::{ErrorKind, SyncOutcome};
+    use origin_domain::{ErrorKind, SyncOutcome};
     use time::Duration;
     use time::macros::datetime;
 

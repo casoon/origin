@@ -42,7 +42,7 @@ trip.
 
 | Port | Double | Feature |
 | --- | --- | --- |
-| `Clock` | `FakeClock` | `origin-core/testing` |
+| `Clock` | `FakeClock` | `origin-domain/testing` |
 | `NotificationService` | `RecordingNotificationService` | `origin-platform/testing` |
 | `Opener` | `RecordingOpener` | `origin-platform/testing` |
 | `SecretStore` | `MemorySecretStore` | always available |

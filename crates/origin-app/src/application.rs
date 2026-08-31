@@ -1,6 +1,6 @@
 use crate::module::ModuleRegistry;
 use crate::platform::Platform;
-use origin_core::Result;
+use origin_domain::Result;
 use serde::Serialize;
 use std::sync::Arc;
 

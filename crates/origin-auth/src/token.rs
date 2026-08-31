@@ -1,4 +1,4 @@
-use origin_core::Clock;
+use origin_domain::Clock;
 use origin_secrets::Secret;
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -123,7 +123,7 @@ impl From<StoredTokenSet> for TokenSet {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use origin_core::testing::FakeClock;
+    use origin_domain::testing::FakeClock;
     use time::macros::datetime;
 
     const NOW: OffsetDateTime = datetime!(2026-08-23 10:00 UTC);

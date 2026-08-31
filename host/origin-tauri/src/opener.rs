@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use origin_platform::Opener;
 use tauri::{AppHandle, Runtime};
 use tauri_plugin_opener::OpenerExt;

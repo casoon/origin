@@ -3,7 +3,7 @@
 //! Every long-running platform operation opens one of these, so a log line can be
 //! traced back to the sync run, job or account that produced it.
 
-use origin_core::{AccountId, ConnectorId, JobId, SyncId};
+use origin_domain::{AccountId, ConnectorId, JobId, SyncId};
 use tracing::Span;
 
 /// Span covering one synchronisation run.

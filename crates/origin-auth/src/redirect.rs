@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use origin_core::Result;
+use origin_domain::Result;
 use std::fmt::Debug;
 
 /// The authorization code handed back by the provider, after `state` was verified.

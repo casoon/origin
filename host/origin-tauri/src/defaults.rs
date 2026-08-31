@@ -5,7 +5,7 @@
 //! (ADR-0004, "convention by default, explicit override when needed").
 
 use crate::{HostConfig, TauriNotificationService, TauriOpener};
-use origin_core::Result;
+use origin_domain::Result;
 use origin_http::HttpClient;
 use origin_http_reqwest::ReqwestHttpClient;
 use origin_platform::{NotificationService, Opener};

@@ -1,5 +1,5 @@
 use crate::store::SettingsStore;
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
@@ -113,7 +113,7 @@ impl Settings {
 mod tests {
     use super::*;
     use crate::StorageSettingsStore;
-    use origin_core::testing::FakeClock;
+    use origin_domain::testing::FakeClock;
     use origin_storage::MemoryStorage;
     use time::macros::datetime;
 

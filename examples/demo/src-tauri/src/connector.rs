@@ -6,7 +6,7 @@
 
 use async_trait::async_trait;
 use origin_connector::{AccountIdentity, AuthKind, Connector, ConnectorDescriptor};
-use origin_core::{AccountId, ConnectorId, ProductPermission, Result};
+use origin_domain::{AccountId, ConnectorId, ProductPermission, Result};
 
 #[derive(Debug, Clone, Copy)]
 pub struct DemoConnector;

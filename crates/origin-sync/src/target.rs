@@ -1,4 +1,4 @@
-use origin_core::{AccountId, ConnectorId};
+use origin_domain::{AccountId, ConnectorId};
 use origin_storage::namespace;
 use serde::{Deserialize, Serialize};
 use std::fmt;

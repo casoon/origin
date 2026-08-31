@@ -1,5 +1,5 @@
 use crate::registry::Jobs;
-use origin_core::JobId;
+use origin_domain::JobId;
 use tokio_util::sync::CancellationToken;
 
 /// What a running job is handed.

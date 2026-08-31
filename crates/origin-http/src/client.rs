@@ -1,12 +1,12 @@
 use crate::{HttpRequest, HttpResponse};
 use async_trait::async_trait;
-use origin_core::Result;
+use origin_domain::Result;
 use std::fmt::Debug;
 
 /// The HTTP port.
 ///
 /// Implementations own connection pooling, timeouts and redirects. They must translate
-/// transport failures into [`origin_core::AppError`]:
+/// transport failures into [`origin_domain::AppError`]:
 ///
 /// - no route, DNS failure, connection refused → `Offline` or `Network`
 /// - timeout → `Network`

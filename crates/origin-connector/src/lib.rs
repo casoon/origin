@@ -11,7 +11,7 @@ pub use descriptor::{AccountIdentity, AuthKind, ConnectorDescriptor};
 pub use registry::ConnectorRegistry;
 
 use async_trait::async_trait;
-use origin_core::{AccountId, ConnectorId, Result};
+use origin_domain::{AccountId, ConnectorId, Result};
 use std::fmt::Debug;
 
 /// An integration with one external service.

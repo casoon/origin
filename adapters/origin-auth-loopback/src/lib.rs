@@ -8,7 +8,7 @@ mod query;
 
 use async_trait::async_trait;
 use origin_auth::{AuthorizationCode, RedirectListener};
-use origin_core::{AppError, Result};
+use origin_domain::{AppError, Result};
 use std::net::{Ipv4Addr, SocketAddr};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
