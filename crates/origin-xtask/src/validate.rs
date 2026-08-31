@@ -3,9 +3,11 @@
 //! Documented rules rot. These are the subset of `ARCHITECTURE.md` that can be
 //! verified mechanically, so a violation fails CI instead of surviving review.
 
+use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 /// Product names that must never appear inside the platform crates (rule 2).
 const PRODUCT_NAMES: &[&str] = &["contoso", "fabrikam", "northwind"];
@@ -45,6 +47,7 @@ pub fn run(root: &Path) -> Result<(), String> {
 /// Rule 1, 5: dependencies point downwards only.
 fn check_layer_dependencies(root: &Path) -> Result<Vec<String>, String> {
     let mut failures = Vec::new();
+    let dependencies_by_package = workspace_dependencies(root)?;
 
     for (layer, forbidden) in [
         ("crates", &["tauri", "adapters", "host", "examples"][..]),
@@ -52,11 +55,14 @@ fn check_layer_dependencies(root: &Path) -> Result<Vec<String>, String> {
         ("host", &["examples"][..]),
     ] {
         for manifest in crates_in(&root.join(layer))? {
-            let dependencies = dependency_names(&manifest)?;
             let package = manifest
                 .parent()
                 .and_then(|path| path.file_name())
                 .map(|name| name.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            let dependencies = dependencies_by_package
+                .get(&package)
+                .cloned()
                 .unwrap_or_default();
 
             for dependency in &dependencies {
@@ -357,17 +363,74 @@ fn crates_in(directory: &Path) -> Result<Vec<PathBuf>, String> {
     Ok(manifests)
 }
 
-fn dependency_names(manifest: &Path) -> Result<Vec<String>, String> {
-    let value: toml::Value = toml::from_str(&read(manifest)?)
-        .map_err(|error| format!("{}: {error}", manifest.display()))?;
+/// Every workspace member's dependency names, keyed by package name.
+///
+/// Backed by `cargo metadata` rather than a manifest's top-level TOML keys: reading
+/// only `[dependencies]` and `[build-dependencies]` missed `[dev-dependencies]`,
+/// target-specific tables (`[target.'cfg(...)'.dependencies]`), and reported a renamed
+/// dependency's local alias (`desktop = { package = "tauri" }`) instead of the crate it
+/// actually names — three ways a layering violation could pass this check unnoticed.
+/// `cargo metadata` resolves all of that once, for every member, in one call.
+fn workspace_dependencies(root: &Path) -> Result<HashMap<String, Vec<String>>, String> {
+    let output = Command::new("cargo")
+        .args(["metadata", "--no-deps", "--format-version", "1"])
+        .current_dir(root)
+        .output()
+        .map_err(|error| format!("cannot run cargo metadata: {error}"))?;
 
-    let mut names = Vec::new();
-    for table in ["dependencies", "build-dependencies"] {
-        if let Some(toml::Value::Table(entries)) = value.get(table) {
-            names.extend(entries.keys().cloned());
-        }
+    if !output.status.success() {
+        return Err(format!(
+            "cargo metadata failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
     }
-    Ok(names)
+
+    let metadata: serde_json::Value = serde_json::from_slice(&output.stdout)
+        .map_err(|error| format!("cannot parse cargo metadata output: {error}"))?;
+
+    dependencies_from_metadata(&metadata)
+}
+
+/// The parsing half of [`workspace_dependencies`], separated so it can be tested
+/// against a fixed `cargo metadata` document instead of a real cargo invocation.
+fn dependencies_from_metadata(
+    metadata: &serde_json::Value,
+) -> Result<HashMap<String, Vec<String>>, String> {
+    let packages = metadata
+        .get("packages")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "cargo metadata: no `packages` array in its output".to_owned())?;
+
+    let mut by_package = HashMap::new();
+    for package in packages {
+        let Some(name) = package.get("name").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+
+        // The dependency's own name, not `rename` — a `package = "..."` alias is a
+        // local name for the crate in *this* manifest's code, not a different crate.
+        // No filtering on `kind` (normal/dev/build) or `target`: all of them are real
+        // dependency edges this check must see.
+        let dependencies = package
+            .get("dependencies")
+            .and_then(serde_json::Value::as_array)
+            .map(|dependencies| {
+                dependencies
+                    .iter()
+                    .filter_map(|dependency| {
+                        dependency
+                            .get("name")
+                            .and_then(serde_json::Value::as_str)
+                            .map(str::to_owned)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        by_package.insert(name.to_owned(), dependencies);
+    }
+
+    Ok(by_package)
 }
 
 fn rust_sources(directory: &Path) -> Result<Vec<PathBuf>, String> {
@@ -444,5 +507,49 @@ mod tests {
             invoked_command_names(source),
             vec!["with_result", "without_result"]
         );
+    }
+
+    /// The three gaps a top-level-TOML-keys check had: a dev-dependency, a
+    /// target-specific dependency, and a renamed dependency reported under its real
+    /// name rather than its local alias.
+    #[test]
+    fn dev_target_and_renamed_dependencies_are_all_reported_by_their_real_name() {
+        let metadata = serde_json::json!({
+            "packages": [
+                {
+                    "name": "origin-example",
+                    "dependencies": [
+                        { "name": "origin-core", "rename": null, "kind": null, "target": null },
+                        { "name": "tauri", "rename": "desktop", "kind": null, "target": null },
+                        { "name": "origin-storage", "rename": null, "kind": "dev", "target": null },
+                        {
+                            "name": "winapi",
+                            "rename": null,
+                            "kind": null,
+                            "target": "cfg(windows)"
+                        }
+                    ]
+                }
+            ]
+        });
+
+        let dependencies = dependencies_from_metadata(&metadata).unwrap();
+
+        let mut names = dependencies["origin-example"].clone();
+        names.sort();
+        assert_eq!(
+            names,
+            vec!["origin-core", "origin-storage", "tauri", "winapi"]
+        );
+    }
+
+    #[test]
+    fn a_package_with_no_dependencies_field_is_reported_as_having_none() {
+        let metadata = serde_json::json!({
+            "packages": [{ "name": "origin-leaf" }]
+        });
+
+        let dependencies = dependencies_from_metadata(&metadata).unwrap();
+        assert_eq!(dependencies["origin-leaf"], Vec::<String>::new());
     }
 }

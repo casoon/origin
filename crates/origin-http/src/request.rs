@@ -1,4 +1,5 @@
 use crate::Headers;
+use crate::headers::RedactedBody;
 use origin_domain::{AppError, Result};
 use serde::Serialize;
 use std::fmt;
@@ -34,12 +35,29 @@ impl fmt::Display for Method {
 ///
 /// The body is already encoded bytes: encoding is the caller's decision, and keeping it
 /// out of the port means the port never needs to know about JSON, forms or multipart.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct HttpRequest {
     pub method: Method,
     pub url: String,
     pub headers: Headers,
     pub body: Option<Vec<u8>>,
+}
+
+/// Redacting `Debug`: a request body can carry an OAuth code, a refresh token or a
+/// client secret, and a derived `Debug` would print it verbatim into any log line that
+/// formats a request with `?`.
+impl fmt::Debug for HttpRequest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HttpRequest")
+            .field("method", &self.method)
+            .field("url", &self.url)
+            .field("headers", &self.headers)
+            .field(
+                "body",
+                &self.body.as_ref().map(|body| RedactedBody(body.len())),
+            )
+            .finish()
+    }
 }
 
 impl HttpRequest {
@@ -144,6 +162,23 @@ mod tests {
             request.url,
             "https://api.example.com/search?q=hello%20world&scope=repo%3Astatus"
         );
+    }
+
+    #[test]
+    fn debug_output_never_contains_the_body() {
+        let request = HttpRequest::post("https://example.com/token")
+            .form(&[("refresh_token", "rt-super-secret")]);
+
+        let rendered = format!("{request:?}");
+
+        assert!(!rendered.contains("rt-super-secret"), "got: {rendered}");
+        assert!(rendered.contains("bytes, redacted"), "got: {rendered}");
+    }
+
+    #[test]
+    fn a_request_with_no_body_shows_none() {
+        let rendered = format!("{:?}", HttpRequest::get("https://example.com"));
+        assert!(rendered.contains("body: None"), "got: {rendered}");
     }
 
     #[test]

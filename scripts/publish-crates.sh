@@ -18,6 +18,43 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
+# The 121 category slugs crates.io currently accepts (crates.io/api/v1/category_slugs,
+# checked 2026-08-31). `cargo publish` rejects an unknown slug per crate, one at a time;
+# checking here catches a typo before that.
+valid_categories=(
+  accessibility aerospace aerospace::drones aerospace::protocols aerospace::simulation
+  aerospace::space-protocols aerospace::unmanned-aerial-vehicles algorithms api-bindings
+  artificial-intelligence asynchronous authentication automotive caching
+  command-line-interface command-line-utilities compilers compression computer-vision
+  concurrency config cryptography cryptography::cryptocurrencies data-structures
+  database database-implementations date-and-time development-tools
+  development-tools::build-utils development-tools::cargo-plugins
+  development-tools::debugging development-tools::ffi
+  development-tools::procedural-macro-helpers development-tools::profiling
+  development-tools::testing email embedded emulators encoding external-ffi-bindings
+  filesystem finance game-development game-engines games graphics gui hardware-support
+  internationalization localization mathematics memory-management multimedia
+  multimedia::audio multimedia::encoding multimedia::images multimedia::video
+  network-programming no-std no-std::no-alloc os os::android-apis os::freebsd-apis
+  os::linux-apis os::macos-apis os::unix-apis os::windows-apis parser-implementations
+  parsing rendering rendering::data-formats rendering::engine rendering::graphics-api
+  rust-patterns science science::bioinformatics science::bioinformatics::genomics
+  science::bioinformatics::proteomics science::bioinformatics::sequence-analysis
+  science::computational-biology science::computational-biology::structural-modeling
+  science::computational-biology::systems-biology science::computational-chemistry
+  science::computational-chemistry::cheminformatics
+  science::computational-chemistry::electronic-structure
+  science::computational-chemistry::molecular-simulation science::geo science::materials
+  science::neuroscience science::quantum-computing science::robotics security simulation
+  template-engine text-editors text-processing value-formatting virtualization
+  visualization wasm web-programming web-programming::http-client
+  web-programming::http-server web-programming::websocket
+)
+
+# All 21 crates currently share the workspace version; if one is ever bumped on its own,
+# switch its `wait_for_index`/`already_published` lookups to that crate's own version.
+workspace_version="$(grep -m1 '^version = ' "$root/Cargo.toml" | sed -E 's/version = "(.*)"/\1/')"
+
 # Every crate a `--released` scaffold needs, in the order it must land on crates.io:
 # each entry may depend on any before it, never on one after it (see
 # crates/origin-xtask/src/scaffold.rs and docs/publishing.md for how that order was
@@ -48,11 +85,13 @@ crates=(
 )
 
 execute=false
+check_names=false
 for arg in "$@"; do
   case "$arg" in
     --execute) execute=true ;;
+    --check-names) check_names=true ;;
     *)
-      echo "usage: $0 [--execute]" >&2
+      echo "usage: $0 [--execute] [--check-names]" >&2
       exit 1
       ;;
   esac
@@ -100,22 +139,67 @@ check_metadata() {
     if ! grep -qE '^categories\s*=' "$manifest"; then
       echo "  - $name: missing categories"
       failures=$((failures + 1))
+    else
+      for category in $(grep -m1 '^categories' "$manifest" | grep -oE '"[a-z0-9:-]+"' | tr -d '"'); do
+        local known=false
+        for valid in "${valid_categories[@]}"; do
+          if [[ "$category" == "$valid" ]]; then
+            known=true
+            break
+          fi
+        done
+        if [[ "$known" == false ]]; then
+          echo "  - $name: \`$category\` is not a category crates.io recognises"
+          failures=$((failures + 1))
+        fi
+      done
     fi
   done
   return "$failures"
 }
 
+# Best-effort: whether `name` is still unclaimed on crates.io. Network-dependent and
+# never fatal on its own — a curl failure (offline, blocked egress) is reported and
+# skipped rather than treated as "taken" or aborting the whole check.
+check_names() {
+  local taken=0
+  for entry in "${crates[@]}"; do
+    local name="${entry%%:*}"
+    local status
+    status="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
+      "https://crates.io/api/v1/crates/$name" 2>/dev/null || echo "curl-failed")"
+
+    case "$status" in
+      404) ;; # unclaimed
+      200)
+        echo "  - $name: already exists on crates.io"
+        taken=$((taken + 1))
+        ;;
+      *)
+        echo "  - $name: could not check (got \"$status\") — verify manually"
+        ;;
+    esac
+  done
+  return "$taken"
+}
+
 wait_for_index() {
   local name="$1"
   for attempt in $(seq 1 30); do
-    if cargo info "$name" >/dev/null 2>&1; then
+    # The exact version, not just the crate name — `cargo info` succeeding on an
+    # older already-indexed version would otherwise look like this publish landed.
+    if cargo info "$name@$workspace_version" >/dev/null 2>&1; then
       return 0
     fi
-    echo "  waiting for $name to appear on crates.io ($attempt/30)..."
+    echo "  waiting for $name@$workspace_version to appear on crates.io ($attempt/30)..."
     sleep 10
   done
-  echo "  $name did not appear on the crates.io index in time" >&2
+  echo "  $name@$workspace_version did not appear on the crates.io index in time" >&2
   return 1
+}
+
+already_published() {
+  cargo info "$1@$workspace_version" >/dev/null 2>&1
 }
 
 echo "publish order (${#crates[@]} crates):"
@@ -132,9 +216,21 @@ if ! check_metadata; then
 fi
 echo "metadata: ok"
 
+if [[ "$check_names" == true ]]; then
+  echo
+  echo "checking name availability on crates.io..."
+  if ! check_names; then
+    echo
+    echo "one or more names are already taken — see docs/publishing.md." >&2
+    exit 1
+  fi
+  echo "names: all unclaimed"
+fi
+
 if [[ "$execute" == false ]]; then
   echo
-  echo "dry run only; nothing was published. Re-run with --execute to publish for real."
+  echo "dry run only; nothing was published. Re-run with --execute to publish for real, or"
+  echo "with --check-names to check crates.io name availability."
   exit 0
 fi
 
@@ -148,6 +244,17 @@ for entry in "${crates[@]}"; do
   name="${entry%%:*}"
   echo
   echo "=== $name ==="
+
+  # Resumable: a crate already published at this version (from an earlier, partially
+  # failed run) is skipped rather than failing the whole run on a re-publish attempt.
+  if already_published "$name"; then
+    echo "  $name@$workspace_version is already on crates.io — skipping"
+    continue
+  fi
+
+  echo "\$ cargo publish --dry-run -p $name"
+  cargo publish --dry-run -p "$name"
+
   echo "\$ cargo publish -p $name"
   cargo publish -p "$name"
   wait_for_index "$name"

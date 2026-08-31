@@ -45,5 +45,9 @@ tauri-plugin-window-state = { workspace = true }
 tracing = { workspace = true }
 ts-rs = { workspace = true, optional = true }
 
+[dev-dependencies]
+tauri = { workspace = true, features = ["test"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
 [lints]
 workspace = true

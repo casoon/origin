@@ -76,7 +76,8 @@ async fn a_percent_encoded_code_is_decoded() {
     let listener = test_listener().await;
     let uri = listener.redirect_uri();
 
-    let client = tokio::spawn(async move { request(&uri, "/callback?code=a%2Fb%2Bc&state=s").await });
+    let client =
+        tokio::spawn(async move { request(&uri, "/callback?code=a%2Fb%2Bc&state=s").await });
 
     assert_eq!(listener.wait("s").await.unwrap().as_str(), "a/b+c");
     client.await.unwrap();
@@ -110,7 +111,8 @@ async fn a_redirect_with_the_wrong_state_is_rejected() {
     let listener = test_listener().await;
     let uri = listener.redirect_uri();
 
-    let client = tokio::spawn(async move { request(&uri, "/callback?code=stolen&state=attacker").await });
+    let client =
+        tokio::spawn(async move { request(&uri, "/callback?code=stolen&state=attacker").await });
 
     let error = listener.wait("our-state").await.unwrap_err();
     client.await.unwrap();

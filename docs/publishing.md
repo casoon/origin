@@ -41,35 +41,45 @@ order, so a partial run is easy to reason about.)
 
 - A crates.io account with publish rights for the `casoon` namespace, and either
   `cargo login` run locally or `CARGO_REGISTRY_TOKEN` set.
-- Crate name availability on crates.io has not been verified yet — check each of the 21
-  names before the first real publish. A collision only surfaces at that point.
+- Crate name availability: run `scripts/publish-crates.sh --check-names` before the
+  first real publish (needs network access to crates.io; degrades to "could not check"
+  per name rather than failing if that access is unavailable).
 - All 21 crates are currently at `0.1.0`; that is fine as a first publish.
 
 ## Running it
 
 ```bash
-scripts/publish-crates.sh            # metadata check only, publishes nothing
-scripts/publish-crates.sh --execute  # publishes for real, one crate at a time
+scripts/publish-crates.sh                  # metadata check only, publishes nothing
+scripts/publish-crates.sh --check-names    # + live crates.io name availability
+scripts/publish-crates.sh --execute        # publishes for real, one crate at a time
 ```
 
-The check step verifies every crate has `description`, `license`, `version`, `readme`
-(with a matching `README.md` in the crate directory), `keywords` and `categories` set,
-and is not marked `publish = false` — the metadata crates.io itself would otherwise
-reject one crate at a time, ten minutes apart. It does not check name availability or
-that `categories` uses valid crates.io slugs (no network access is required for this
-step; validate against `https://crates.io/api/v1/category_slugs` before the first real
-publish).
+The metadata check verifies every crate has `description`, `license`, `version`,
+`readme` (with a matching `README.md` in the crate directory), `keywords` and
+`categories` set and valid (checked against the crates.io category slug list embedded
+in the script), and is not marked `publish = false` — everything crates.io itself would
+otherwise reject one crate at a time, ten minutes apart. None of this needs network
+access; `--check-names` is the one step that does.
 
-`--execute` publishes each crate with `cargo publish -p <name>` and then polls
-`cargo info <name>` until the crates.io index has caught up before moving to the next
-one — the next crate's build depends on this one being resolvable, not merely accepted.
+`--execute` does, for each crate in order:
+
+1. Skip it if `<name>@<version>` is already on crates.io (see below).
+2. `cargo publish --dry-run -p <name>` — a real build-and-package pass against the
+   crates.io registry, using whichever of its `origin-*` dependencies are already
+   published. This is the per-crate dry run; it cannot run meaningfully for every crate
+   ahead of time, only immediately before that crate's own turn, because it needs its
+   dependencies to already be live.
+3. `cargo publish -p <name>` for real.
+4. Poll `cargo info <name>@<version>` (the exact version, not just the crate) until the
+   crates.io index has caught up — the next crate's dry run and build both depend on
+   this one being resolvable there, not merely accepted.
 
 ## If a run fails partway through
 
 Crates already published stay published (crates.io has no unpublish for a used
-version). Fix the failure and re-run; already-published crates will simply fail to
-re-publish at the same version, which is safe to ignore, or trim them from the
-`crates` array in `scripts/publish-crates.sh` before re-running.
+version). Fix the failure and re-run the same `--execute` command: step 1 above skips
+anything already published at the current version, so a partial run resumes on its own
+rather than needing the `crates` array trimmed by hand.
 
 ## After all 21 are published
 

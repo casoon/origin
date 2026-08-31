@@ -175,13 +175,17 @@ impl SyncEngine {
             let run_target = target.clone();
             runs.push((
                 target,
-                tokio::spawn(async move { engine.sync_now(&run_target).await }),
+                tokio::spawn(async move { engine.sync_if_still_due(&run_target, now).await }),
             ));
         }
 
         for (target, run) in runs {
             let outcome = match run.await {
-                Ok(outcome) => outcome,
+                Ok(Some(outcome)) => outcome,
+                // The target was still due when this task started but no longer was
+                // once it got the lock — another run (a manual refresh, or this same
+                // scheduler tick racing itself) already covered it.
+                Ok(None) => continue,
                 Err(error) => Err(AppError::internal(format!(
                     "sync task for {target} failed: {error}"
                 ))),
@@ -190,6 +194,45 @@ impl SyncEngine {
         }
 
         results
+    }
+
+    /// Like [`SyncEngine::sync_now`], but re-checks the schedule after acquiring the
+    /// target lock rather than before.
+    ///
+    /// Only the scheduler calls this. Between `run_due` deciding a target is due and
+    /// this task acquiring the single-flight lock, a manual [`SyncEngine::sync_now`] or
+    /// [`SyncEngine::sync_if_due`] may already have covered it — without the recheck,
+    /// this task would run a second, immediately-redundant sync the moment the lock
+    /// frees up. [`SyncEngine::sync_now`] itself must stay unconditional: a caller
+    /// invoking it directly asked for a sync *now*, not for the scheduler's due check.
+    async fn sync_if_still_due(
+        &self,
+        target: &SyncTarget,
+        now: OffsetDateTime,
+    ) -> Option<Result<SyncOutcome>> {
+        let (policy, source, running, cancel) = {
+            let targets = self.read();
+            let registration = targets.get(target)?;
+            (
+                registration.policy,
+                registration.source.clone(),
+                registration.running.clone(),
+                registration.cancel.clone(),
+            )
+        };
+
+        let _guard = running.lock().await;
+        let state = match self.state.load(target).await {
+            Ok(state) => state,
+            Err(error) => return Some(Err(error)),
+        };
+
+        if now < self.due_at_for(&state, &policy) {
+            tracing::debug!(%target, "sync skipped: no longer due once the lock was free");
+            return None;
+        }
+
+        Some(self.sync_with(target, policy, source, cancel, state).await)
     }
 
     /// Sync unless the target ran very recently.

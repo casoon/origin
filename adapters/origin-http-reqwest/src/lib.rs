@@ -16,9 +16,15 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 /// fails fast instead of consuming the whole request timeout.
 const DEFAULT_CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// Default ceiling on a response body. Comfortably large for any JSON API response
+/// Origin talks to; small enough that a runaway or hostile server cannot exhaust the
+/// desktop process's memory reading an unbounded or falsely-labelled body.
+const DEFAULT_MAX_RESPONSE_BYTES: u64 = 10 * 1024 * 1024;
+
 #[derive(Debug, Clone)]
 pub struct ReqwestHttpClient {
     inner: reqwest::Client,
+    max_response_bytes: u64,
 }
 
 impl ReqwestHttpClient {
@@ -35,6 +41,7 @@ impl ReqwestHttpClient {
             user_agent: user_agent.as_ref().to_owned(),
             timeout: DEFAULT_TIMEOUT,
             connect_timeout: DEFAULT_CONNECT_TIMEOUT,
+            max_response_bytes: DEFAULT_MAX_RESPONSE_BYTES,
         }
     }
 }
@@ -44,6 +51,7 @@ pub struct ReqwestHttpClientBuilder {
     user_agent: String,
     timeout: Duration,
     connect_timeout: Duration,
+    max_response_bytes: u64,
 }
 
 impl ReqwestHttpClientBuilder {
@@ -57,6 +65,14 @@ impl ReqwestHttpClientBuilder {
         self
     }
 
+    /// Override the response body ceiling (default 10 MiB). A connector whose provider
+    /// legitimately answers with larger payloads sets this explicitly and visibly,
+    /// rather than the port having no limit at all.
+    pub fn max_response_bytes(mut self, max_response_bytes: u64) -> Self {
+        self.max_response_bytes = max_response_bytes;
+        self
+    }
+
     pub fn build(self) -> Result<ReqwestHttpClient> {
         let inner = reqwest::Client::builder()
             .user_agent(self.user_agent)
@@ -67,7 +83,10 @@ impl ReqwestHttpClientBuilder {
                 AppError::configuration(format!("cannot build http client: {error}"))
             })?;
 
-        Ok(ReqwestHttpClient { inner })
+        Ok(ReqwestHttpClient {
+            inner,
+            max_response_bytes: self.max_response_bytes,
+        })
     }
 }
 
@@ -77,9 +96,14 @@ impl HttpClient for ReqwestHttpClient {
         let method = reqwest::Method::from_bytes(request.method.as_str().as_bytes())
             .map_err(|error| AppError::internal(format!("invalid http method: {error}")))?;
 
-        // The URL is logged; headers are not — they carry the bearer token, and
-        // `Headers` only redacts when something formats it with `Debug`.
-        tracing::debug!(method = %request.method, url = %request.url, "http request");
+        // The URL is logged with its query string stripped — a query can carry an API
+        // key or an OAuth code — and headers are not logged at all; `Headers` only
+        // redacts when something formats it with `Debug`.
+        tracing::debug!(
+            method = %request.method,
+            url = %request.url.split('?').next().unwrap_or(&request.url),
+            "http request"
+        );
 
         let mut builder = self.inner.request(method, &request.url);
         for (name, value) in request.headers.iter() {
@@ -105,11 +129,37 @@ impl HttpClient for ReqwestHttpClient {
             })
             .collect::<Headers>();
 
-        let body = response.bytes().await.map_err(to_app_error)?.to_vec();
+        let body = read_body_limited(response, self.max_response_bytes).await?;
 
         tracing::debug!(status, bytes = body.len(), "http response");
         Ok(HttpResponse::new(status, headers, body))
     }
+}
+
+/// Reads a response body up to `limit` bytes, failing rather than buffering further.
+///
+/// A `Content-Length` header is checked first so an honestly-labelled oversized
+/// response fails before any of it is read; the running total during the read guards
+/// against a response with no `Content-Length` or one that undercounts it.
+async fn read_body_limited(mut response: reqwest::Response, limit: u64) -> Result<Vec<u8>> {
+    if let Some(length) = response.content_length()
+        && length > limit
+    {
+        return Err(AppError::ExternalService(format!(
+            "response declared {length} bytes, over the {limit} byte limit"
+        )));
+    }
+
+    let mut body = Vec::new();
+    while let Some(chunk) = response.chunk().await.map_err(to_app_error)? {
+        if body.len() as u64 + chunk.len() as u64 > limit {
+            return Err(AppError::ExternalService(format!(
+                "response body exceeds the {limit} byte limit"
+            )));
+        }
+        body.extend_from_slice(&chunk);
+    }
+    Ok(body)
 }
 
 /// Transport failures only — a non-2xx status is not an error here (see [`HttpClient`]).

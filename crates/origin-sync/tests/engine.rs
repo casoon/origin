@@ -560,6 +560,52 @@ async fn one_slow_target_does_not_block_other_due_targets() {
 }
 
 #[tokio::test]
+async fn a_scheduler_run_does_not_re_sync_a_target_a_concurrent_manual_sync_already_covered() {
+    let harness = harness();
+    let source = BlockingSource::new();
+    let notifications = target("notifications");
+    harness.engine.register(
+        notifications.clone(),
+        policy(Duration::minutes(5)),
+        source.clone(),
+    );
+
+    // A manual sync starts first and holds the target's single-flight lock for the
+    // whole exchange below.
+    let manual = {
+        let engine = harness.engine.clone();
+        let target = notifications.clone();
+        tokio::spawn(async move { engine.sync_now(&target).await })
+    };
+    source.entered.wait().await;
+
+    // The scheduler sees the target as still due (nothing has completed yet) and spawns
+    // a run for it, which blocks behind the manual sync's lock.
+    let scheduled = {
+        let engine = harness.engine.clone();
+        tokio::spawn(async move { engine.run_due(NOW).await })
+    };
+    tokio::task::yield_now().await;
+
+    // Releasing the manual sync lets it finish and free the lock — the scheduler's
+    // queued run must then recheck the schedule instead of blindly firing again.
+    source.release.notify_one();
+
+    manual.await.unwrap().unwrap();
+    let results = scheduled.await.unwrap();
+
+    assert_eq!(
+        source.calls.load(Ordering::SeqCst),
+        1,
+        "the target must not have synced twice"
+    );
+    assert!(
+        results.is_empty(),
+        "the scheduler should have found nothing left to do, got {results:?}"
+    );
+}
+
+#[tokio::test]
 async fn the_scheduler_stops_when_asked() {
     let harness = harness();
     let source = ScriptedSource::new();

@@ -41,10 +41,23 @@ export async function onPlatformEvent(
  * import) that does not fit the platform's job/event model still need a transport —
  * this keeps that need from forcing a direct `@tauri-apps/api` import into a view
  * (ADR-0010). The returned function unsubscribes; call it from a component teardown.
+ *
+ * `name` and its payload type are declared together, in one place, as a product's own
+ * event map — not chosen independently at each call site the way a bare
+ * `onEvent<T>(name: string, ...)` would allow:
+ *
+ * ```ts
+ * type MyEvents = { "myapp://crawl-progress": { current: number; total: number } };
+ * onEvent<MyEvents>("myapp://crawl-progress", (payload) => { ... }); // payload is typed
+ * ```
+ *
+ * Without an explicit event map, `payload` infers as `unknown` rather than silently
+ * accepting whatever type a caller names — a typed product wrapper is expected to
+ * supply the map once and re-export a narrower function views call instead.
  */
-export async function onEvent<T>(
-  name: string,
-  handler: (payload: T) => void,
+export async function onEvent<Events extends Record<string, unknown> = Record<string, unknown>>(
+  name: keyof Events & string,
+  handler: (payload: Events[keyof Events & typeof name]) => void,
 ): Promise<UnlistenFn> {
-  return listen<T>(name, (event) => handler(event.payload));
+  return listen<Events[keyof Events & typeof name]>(name, (event) => handler(event.payload));
 }

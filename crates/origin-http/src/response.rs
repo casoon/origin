@@ -1,14 +1,29 @@
+use crate::headers::RedactedBody;
 use crate::{Headers, RateLimit};
 use origin_domain::{AppError, Result};
 use serde::de::DeserializeOwned;
+use std::fmt;
 use time::OffsetDateTime;
 
 /// One incoming response.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct HttpResponse {
     pub status: u16,
     pub headers: Headers,
     pub body: Vec<u8>,
+}
+
+/// Redacting `Debug`: a response body can carry a freshly issued access or refresh
+/// token, and a derived `Debug` would print it verbatim into any log line that formats
+/// a response with `?`.
+impl fmt::Debug for HttpResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HttpResponse")
+            .field("status", &self.status)
+            .field("headers", &self.headers)
+            .field("body", &RedactedBody(self.body.len()))
+            .finish()
+    }
 }
 
 impl HttpResponse {
@@ -118,6 +133,20 @@ mod tests {
 
     fn response(status: u16, headers: Headers) -> HttpResponse {
         HttpResponse::new(status, headers, b"{}".to_vec())
+    }
+
+    #[test]
+    fn debug_output_never_contains_the_body() {
+        let response = HttpResponse::new(
+            200,
+            Headers::new(),
+            b"{\"access_token\":\"secret\"}".to_vec(),
+        );
+
+        let rendered = format!("{response:?}");
+
+        assert!(!rendered.contains("secret"), "got: {rendered}");
+        assert!(rendered.contains("bytes, redacted"), "got: {rendered}");
     }
 
     #[test]

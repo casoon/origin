@@ -22,6 +22,7 @@ fn config() -> OAuthConfig {
         "https://provider.example/authorize",
         "https://provider.example/token",
     )
+    .unwrap()
     .with_scopes(["repo", "read:org"])
 }
 

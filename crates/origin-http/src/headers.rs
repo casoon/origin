@@ -73,6 +73,19 @@ impl<K: Into<String>, V: Into<String>> FromIterator<(K, V)> for Headers {
     }
 }
 
+/// A body's length, standing in for its content in `Debug` output.
+///
+/// `HttpRequest` and `HttpResponse` bodies can carry OAuth codes, refresh tokens or
+/// client secrets; nothing at this layer can tell safe content from sensitive content,
+/// so the body is never printed, only its size.
+pub(crate) struct RedactedBody(pub(crate) usize);
+
+impl fmt::Debug for RedactedBody {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<{} bytes, redacted>", self.0)
+    }
+}
+
 /// Redacting `Debug`.
 ///
 /// A `tracing::debug!(?headers, ...)` anywhere in the stack would otherwise print

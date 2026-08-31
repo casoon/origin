@@ -216,3 +216,68 @@ pub async fn origin_sync_now(
 pub async fn origin_health(state: State<'_, OriginState>) -> CommandResult<Health> {
     Ok(state.application().platform().sync.health().await)
 }
+
+/// Exercises commands through a real, Tauri-managed `State` rather than by calling
+/// their bodies with a hand-built value — the part `cargo check` alone cannot prove,
+/// namely that `OriginState` is actually reachable as Tauri state the way the real host
+/// wires it in `lib.rs`. No window is started; [`tauri::test::mock_app`] provides the
+/// managed-state machinery without one.
+///
+/// Commands taking an `AppHandle` are not covered here: that parameter is the default,
+/// `Wry`-backed [`tauri::AppHandle`], which a [`tauri::test::MockRuntime`]-backed app
+/// cannot produce.
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::HostConfig;
+    use crate::state::OriginState;
+    use origin_app::ApplicationBuilder;
+    use tauri::Manager;
+    use tokio_util::sync::CancellationToken;
+
+    fn mock_app_with_state() -> tauri::App<tauri::test::MockRuntime> {
+        let application = ApplicationBuilder::in_memory()
+            .build()
+            .expect("an in-memory application always builds");
+
+        let app = tauri::test::mock_app();
+        app.manage(OriginState::new(
+            application,
+            HostConfig::new("dev.origin.tests"),
+            CancellationToken::new(),
+        ));
+        app
+    }
+
+    #[tokio::test]
+    async fn health_reads_through_the_managed_state_to_the_sync_engine() {
+        let app = mock_app_with_state();
+
+        let health = origin_health(app.state()).await.unwrap();
+
+        assert_eq!(health, Health::Unknown, "no sync targets are registered");
+    }
+
+    #[tokio::test]
+    async fn a_setting_written_through_one_command_is_read_back_through_another() {
+        let app = mock_app_with_state();
+
+        origin_setting_set(app.state(), "theme".to_owned(), serde_json::json!("dark"))
+            .await
+            .unwrap();
+
+        let value = origin_setting_get(app.state(), "theme".to_owned())
+            .await
+            .unwrap();
+
+        assert_eq!(value, Some(serde_json::json!("dark")));
+    }
+
+    #[tokio::test]
+    async fn a_freshly_built_application_has_no_accounts_or_jobs() {
+        let app = mock_app_with_state();
+
+        assert!(origin_accounts(app.state()).await.unwrap().is_empty());
+        assert!(origin_jobs(app.state()).await.unwrap().is_empty());
+    }
+}
