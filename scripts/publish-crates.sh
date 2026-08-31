@@ -159,27 +159,33 @@ check_metadata() {
 }
 
 # Best-effort: whether `name` is still unclaimed on crates.io. Network-dependent and
-# never fatal on its own — a curl failure (offline, blocked egress) is reported and
+# never fatal on its own — a lookup failure (offline, blocked egress) is reported and
 # skipped rather than treated as "taken" or aborting the whole check.
+#
+# Uses `cargo info`, not `curl`: some sandboxed/CI network policies allow cargo's own
+# registry traffic while blocking arbitrary HTTPS clients, so `cargo info` is the more
+# reliable check — and it is literally the tool `--execute` publishes with. Run from a
+# scratch directory outside the workspace: inside it, every one of these 21 names
+# resolves to its local path dependency instead of querying the registry.
 check_names() {
   local taken=0
+  local scratch
+  scratch="$(mktemp -d)"
+
   for entry in "${crates[@]}"; do
     local name="${entry%%:*}"
-    local status
-    status="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
-      "https://crates.io/api/v1/crates/$name" 2>/dev/null || echo "curl-failed")"
-
-    case "$status" in
-      404) ;; # unclaimed
-      200)
-        echo "  - $name: already exists on crates.io"
-        taken=$((taken + 1))
-        ;;
-      *)
-        echo "  - $name: could not check (got \"$status\") — verify manually"
-        ;;
-    esac
+    local output
+    if output="$(cd "$scratch" && timeout 10 cargo info "$name" 2>&1)"; then
+      echo "  - $name: already exists on crates.io"
+      taken=$((taken + 1))
+    elif echo "$output" | grep -qi "could not find\|does not exist"; then
+      : # unclaimed
+    else
+      echo "  - $name: could not check — verify manually ($(echo "$output" | tail -1))"
+    fi
   done
+
+  rm -rf "$scratch"
   return "$taken"
 }
 
