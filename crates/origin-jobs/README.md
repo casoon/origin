@@ -33,6 +33,24 @@ let status = jobs.get(&id).await;
 jobs.cancel(&id).await?;
 ```
 
+Two things plain `spawn` cannot do, for a request/response handler that needs the
+job's result directly rather than polling `Jobs::get`:
+
+```rust
+// Refuses to start if a "crawl" job is already running, and gives the caller a
+// typed result to await — the common shape for "run this, only one at a time, and
+// hand me back what it computed".
+let (_id, result) = jobs.spawn_exclusive_awaitable("crawl", |ctx| async move {
+    let report = crawl(&ctx).await?;
+    Ok(report)
+})?;
+
+let report = result.wait().await?;
+```
+
+`spawn_exclusive` and `spawn_awaitable` are the same two capabilities on their own,
+for when only one of them applies.
+
 ## Stability
 
 Pre-1.0 (`0.1.0`). Public types, enums and field sets may still change between minor
