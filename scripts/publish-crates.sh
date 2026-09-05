@@ -18,6 +18,12 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
+# `cargo info` run inside this workspace can resolve an `origin-*` path package and
+# falsely report it as published. All registry existence checks therefore run from an
+# unrelated scratch directory.
+registry_scratch="$(mktemp -d)"
+trap 'rm -rf "$registry_scratch"' EXIT
+
 # The 121 category slugs crates.io currently accepts (crates.io/api/v1/category_slugs,
 # checked 2026-08-31). `cargo publish` rejects an unknown slug per crate, one at a time;
 # checking here catches a typo before that.
@@ -169,13 +175,11 @@ check_metadata() {
 # resolves to its local path dependency instead of querying the registry.
 check_names() {
   local taken=0
-  local scratch
-  scratch="$(mktemp -d)"
 
   for entry in "${crates[@]}"; do
     local name="${entry%%:*}"
     local output
-    if output="$(cd "$scratch" && timeout 10 cargo info "$name" 2>&1)"; then
+    if output="$(cd "$registry_scratch" && timeout 10 cargo info "$name" 2>&1)"; then
       echo "  - $name: already exists on crates.io"
       taken=$((taken + 1))
     elif echo "$output" | grep -qi "could not find\|does not exist"; then
@@ -185,7 +189,6 @@ check_names() {
     fi
   done
 
-  rm -rf "$scratch"
   return "$taken"
 }
 
@@ -194,7 +197,7 @@ wait_for_index() {
   for attempt in $(seq 1 30); do
     # The exact version, not just the crate name — `cargo info` succeeding on an
     # older already-indexed version would otherwise look like this publish landed.
-    if cargo info "$name@$workspace_version" >/dev/null 2>&1; then
+    if (cd "$registry_scratch" && cargo info "$name@$workspace_version" >/dev/null 2>&1); then
       return 0
     fi
     echo "  waiting for $name@$workspace_version to appear on crates.io ($attempt/30)..."
@@ -205,7 +208,7 @@ wait_for_index() {
 }
 
 already_published() {
-  cargo info "$1@$workspace_version" >/dev/null 2>&1
+  (cd "$registry_scratch" && cargo info "$1@$workspace_version" >/dev/null 2>&1)
 }
 
 publish_crate() {
