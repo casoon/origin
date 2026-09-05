@@ -91,7 +91,6 @@ handling, settings, secrets, storage, a security profile, CI, and a module that 
 already testable without a desktop session. Its `xtask` is three lines, so the rules
 and the generator arrive with a version bump.
 
-Until the Origin packages are published, scaffolding points dependencies at the current
-checkout so the generated project builds immediately. `--released` switches to registry
-versions once those releases exist. Origin's own CI always tests the local form against
-`main` (ADR-0026).
+Scaffolding uses released registry versions by default. Pass `--local` to point the
+generated project at the current Origin checkout instead. Origin's own CI always tests
+that local form against `main` (ADR-0026).

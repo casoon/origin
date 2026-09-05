@@ -1,17 +1,15 @@
 # Publishing Origin's crates
 
-Products scaffolded with `cargo xtask new --released` depend on the `origin-*` crates
-by registry version, not by path (see ADR-0026 and `crates/origin-xtask/src/scaffold.rs`).
-That only works once those crates actually exist on crates.io. Until then, a scaffold
-defaults to `--local`, which points at this checkout instead — a workaround for
-pre-publish development, not the target state.
+Products scaffolded with `cargo xtask new` depend on the `origin-*` crates by registry
+version, not by path (see ADR-0026 and `crates/origin-xtask/src/scaffold.rs`). Pass
+`--local` only when a generated product should use the current Origin checkout.
 
 This document is the checklist for the real thing. Publishing itself is a manual,
 deliberate act (`scripts/publish-crates.sh --execute`); nothing here runs on its own.
 
 ## Why these 21, in this order
 
-Not every crate in the workspace is needed for `--released` to work — only the ones
+Not every crate in the workspace is needed for a generated product — only the ones
 the template's own dependencies pull in, transitively. `origin-ai`, `origin-mcp`,
 `origin-auth-loopback` and `origin-mcp-stdio` are used by `examples/demo` only, so they
 are excluded for now; add them to `scripts/publish-crates.sh` when a real product needs
@@ -74,16 +72,12 @@ access; `--check-names` is the one step that does.
    crates.io index has caught up — the next crate's dry run and build both depend on
    this one being resolvable there, not merely accepted.
 
+crates.io limits how quickly brand-new package names may be created. If that limit is
+reached, the script waits ten minutes and retries the same crate automatically.
+
 ## If a run fails partway through
 
 Crates already published stay published (crates.io has no unpublish for a used
 version). Fix the failure and re-run the same `--execute` command: step 1 above skips
 anything already published at the current version, so a partial run resumes on its own
 rather than needing the `crates` array trimmed by hand.
-
-## After all 21 are published
-
-Switch the default in `crates/origin-xtask/src/lib.rs::new_from_args` from `--local` to
-`--released`-by-default (or leave the flag as is and update `docs/updating.md` and the
-CI scaffold step in `.github/workflows/ci.yml` to pass `--released`), and drop the
-`--local` path-rewriting once no supported workflow needs it.

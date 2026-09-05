@@ -85,7 +85,7 @@ fn usage() {
     );
 }
 
-/// Parse `new <slug> [--name X] [--id Y] [--into DIR] [--released]`.
+/// Parse `new <slug> [--name X] [--id Y] [--into DIR] [--local]`.
 fn new_from_args(flags: &[String]) -> Result<(), String> {
     let root = workspace_root();
 
@@ -93,7 +93,7 @@ fn new_from_args(flags: &[String]) -> Result<(), String> {
         .first()
         .filter(|argument| !argument.starts_with("--"))
         .ok_or_else(|| {
-            "usage: cargo xtask new <slug> [--name X] [--id Y] [--into DIR] [--released]".to_owned()
+            "usage: cargo xtask new <slug> [--name X] [--id Y] [--into DIR] [--local]".to_owned()
         })?
         .clone();
 
@@ -111,9 +111,12 @@ fn new_from_args(flags: &[String]) -> Result<(), String> {
         into: value("--into")
             .map(PathBuf::from)
             .unwrap_or_else(|| root.clone()),
-        // Origin packages are not published yet. A normal scaffold therefore points
-        // at the checkout that supplies the template and is buildable immediately.
-        local: (!flags.iter().any(|flag| flag == "--released")).then(|| root.clone()),
+        // Released Origin packages are the normal dependency source. `--local` is
+        // reserved for Origin's downstream CI and side-by-side platform development.
+        local: flags
+            .iter()
+            .any(|flag| flag == "--local")
+            .then(|| root.clone()),
         slug,
     };
 

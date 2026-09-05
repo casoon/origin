@@ -57,14 +57,14 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      # Until Origin is published, the scaffold points frontend deps at this checkout
-      # via `link:`. Those packages resolve their own `workspace:*` dependencies (e.g.
+      # The local scaffold points frontend deps at this checkout via `link:`. Those
+      # packages resolve their own `workspace:*` dependencies (e.g.
       # `@origin/ui` → `@origin/client`) from *this* pnpm install, not the scaffolded
       # project's — so it has to exist before the frontend link target is used.
       - run: pnpm install --frozen-lockfile
 
       - name: Scaffold a project against this checkout
-        run: cargo run -p xtask -- new sample-app --into "$RUNNER_TEMP"
+        run: cargo run -p xtask -- new sample-app --into "$RUNNER_TEMP" --local
 
       - name: The generated project passes its own rules
         working-directory: ${{ runner.temp }}/sample-app

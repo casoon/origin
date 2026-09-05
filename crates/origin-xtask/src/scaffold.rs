@@ -185,8 +185,8 @@ fn copy_template(
 /// Point the generated project at a local Origin checkout.
 ///
 /// Rewrites the dependencies rather than adding `[patch.crates-io]`: patching only
-/// works for crates that exist in the registry, and the Origin crates are not published
-/// yet. Used by Origin's own CI to prove the template still builds against `main`.
+/// works only for crates that exist in the registry. Used by Origin's own CI to prove
+/// the template still builds against `main`.
 fn patch_to_local(target: &Path, origin: &Path) -> Result<(), String> {
     let origin = origin
         .canonicalize()

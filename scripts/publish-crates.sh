@@ -55,7 +55,7 @@ valid_categories=(
 # switch its `wait_for_index`/`already_published` lookups to that crate's own version.
 workspace_version="$(grep -m1 '^version = ' "$root/Cargo.toml" | sed -E 's/version = "(.*)"/\1/')"
 
-# Every crate a `--released` scaffold needs, in the order it must land on crates.io:
+# Every crate a generated product needs, in the order it must land on crates.io:
 # each entry may depend on any before it, never on one after it (see
 # crates/origin-xtask/src/scaffold.rs and docs/publishing.md for how that order was
 # derived). `origin-ai`, `origin-mcp`, `origin-auth-loopback` and `origin-mcp-stdio`
@@ -208,6 +208,32 @@ already_published() {
   cargo info "$1@$workspace_version" >/dev/null 2>&1
 }
 
+publish_crate() {
+  local name="$1"
+  local output
+
+  while true; do
+    output="$(mktemp)"
+    if cargo publish -p "$name" 2>&1 | tee "$output"; then
+      rm -f "$output"
+      return 0
+    fi
+
+    if grep -Eqi "rate.?limit|too many new crates" "$output"; then
+      rm -f "$output"
+      echo "  crates.io new-crate limit reached; retrying in 10 minutes..."
+      for minute in $(seq 1 10); do
+        sleep 60
+        echo "  retry wait: $minute/10 minutes"
+      done
+      continue
+    fi
+
+    rm -f "$output"
+    return 1
+  done
+}
+
 echo "publish order (${#crates[@]} crates):"
 for entry in "${crates[@]}"; do
   echo "  - ${entry%%:*}"
@@ -262,7 +288,7 @@ for entry in "${crates[@]}"; do
   cargo publish --dry-run -p "$name"
 
   echo "\$ cargo publish -p $name"
-  cargo publish -p "$name"
+  publish_crate "$name"
   wait_for_index "$name"
 done
 
