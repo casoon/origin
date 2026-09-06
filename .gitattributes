@@ -1,0 +1,5 @@
+# Several tests and `cargo xtask generate --check` compare freshly generated content
+# (built in Rust with `\n`) byte-for-byte against files checked into git (ADR-0022).
+# Without this, a Windows checkout converts those files to CRLF and the comparison
+# fails — not because anything drifted, only because of how the file was checked out.
+* text=auto eol=lf
