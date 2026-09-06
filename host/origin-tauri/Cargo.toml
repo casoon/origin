@@ -47,8 +47,15 @@ tracing = { workspace = true }
 ts-rs = { workspace = true, optional = true }
 
 [dev-dependencies]
-tauri = { workspace = true, features = ["test"] }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+# `tauri::test::mock_app()` reliably crashes the whole test binary with
+# STATUS_ENTRYPOINT_NOT_FOUND on Windows — a known, unresolved upstream issue
+# (tauri-apps/tauri#11028, #13419, #13948, #13954), not anything in this crate.
+# The "test" feature (and the tests that use it, gated in src/commands.rs) is
+# therefore only enabled on the platforms where it actually runs.
+[target.'cfg(not(windows))'.dev-dependencies]
+tauri = { workspace = true, features = ["test"] }
 
 [lints]
 workspace = true

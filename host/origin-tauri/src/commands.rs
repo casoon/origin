@@ -226,7 +226,13 @@ pub async fn origin_health(state: State<'_, OriginState>) -> CommandResult<Healt
 /// Commands taking an `AppHandle` are not covered here: that parameter is the default,
 /// `Wry`-backed [`tauri::AppHandle`], which a [`tauri::test::MockRuntime`]-backed app
 /// cannot produce.
-#[cfg(test)]
+///
+/// Windows only: `tauri::test::mock_app()` crashes the whole test binary there with
+/// `STATUS_ENTRYPOINT_NOT_FOUND`, a known unresolved upstream issue
+/// (tauri-apps/tauri#11028, #13419, #13948, #13954) — this module is not compiled on
+/// that target, and the `tauri` dev-dependency's `test` feature is not enabled there
+/// either (see Cargo.toml).
+#[cfg(all(test, not(windows)))]
 mod tests {
     use super::*;
     use crate::HostConfig;
