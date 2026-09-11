@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use origin_ai::AiService;
 use origin_app::Application;
 use origin_domain::{AppError, Result};
-use origin_mcp::{AiPermission, AiPermissions, McpServer, Tool, ToolDescriptor, ToolOutput};
+use origin_mcp_core::{AiPermission, AiPermissions, McpServer, Tool, ToolDescriptor, ToolOutput};
 use origin_settings::Setting;
 use serde_json::{Value, json};
 use std::sync::Arc;

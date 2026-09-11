@@ -7,10 +7,14 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+homepage.workspace = true
+readme = "README.md"
+keywords = ["mcp", "stdio", "transport", "ai", "tauri"]
+categories = ["artificial-intelligence", "development-tools"]
 
 [dependencies]
 origin-domain = { workspace = true }
-origin-mcp = { workspace = true }
+origin-mcp-core = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["io-std", "io-util"] }
 tracing = { workspace = true }

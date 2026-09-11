@@ -1,5 +1,5 @@
 [package]
-name = "origin-mcp"
+name = "origin-mcp-core"
 description = "The MCP boundary: which of an application's operations an external AI may invoke, and under which permission."
 version.workspace = true
 edition.workspace = true
@@ -7,6 +7,10 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+homepage.workspace = true
+readme = "README.md"
+keywords = ["mcp", "model-context", "ai", "tauri", "tools"]
+categories = ["artificial-intelligence", "development-tools"]
 
 [dependencies]
 async-trait = { workspace = true }

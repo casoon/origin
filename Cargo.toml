@@ -15,7 +15,7 @@ members = [
     "crates/origin-sync",
     "crates/origin-manifest",
     "crates/origin-ai",
-    "crates/origin-mcp",
+    "crates/origin-mcp-core",
     "crates/origin-xtask",
     "crates/origin-telemetry",
     "crates/origin-app",
@@ -59,7 +59,7 @@ origin-jobs = { path = "crates/origin-jobs", version = "0.2.0" }
 origin-sync = { path = "crates/origin-sync", version = "0.2.0" }
 origin-manifest = { path = "crates/origin-manifest", version = "0.2.0" }
 origin-ai = { path = "crates/origin-ai", version = "0.2.0" }
-origin-mcp = { path = "crates/origin-mcp", version = "0.2.0" }
+origin-mcp-core = { path = "crates/origin-mcp-core", version = "0.2.0" }
 origin-xtask = { path = "crates/origin-xtask", version = "0.2.0" }
 origin-telemetry = { path = "crates/origin-telemetry", version = "0.2.0" }
 origin-app = { path = "crates/origin-app", version = "0.2.0" }

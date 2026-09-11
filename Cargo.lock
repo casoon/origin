@@ -3076,7 +3076,7 @@ dependencies = [
  "origin-connector",
  "origin-domain",
  "origin-events",
- "origin-mcp",
+ "origin-mcp-core",
  "origin-mcp-http",
  "origin-mcp-stdio",
  "origin-platform",
@@ -3171,7 +3171,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "origin-mcp"
+name = "origin-mcp-core"
 version = "0.2.0"
 dependencies = [
  "async-trait",
@@ -3190,7 +3190,7 @@ dependencies = [
  "async-trait",
  "getrandom 0.4.3",
  "origin-domain",
- "origin-mcp",
+ "origin-mcp-core",
  "origin-platform",
  "serde",
  "serde_json",
@@ -3205,7 +3205,7 @@ version = "0.2.0"
 dependencies = [
  "async-trait",
  "origin-domain",
- "origin-mcp",
+ "origin-mcp-core",
  "serde_json",
  "tokio",
  "tracing",

@@ -78,7 +78,7 @@ crates/            platform crates — never depend on Tauri, never know a produ
   origin-connector   the connector contract
   origin-sync        sync engine: policies, backoff, offline, health
   origin-jobs        background jobs: progress, cancellation
-  origin-mcp         the MCP boundary: tools an external AI may invoke
+  origin-mcp-core    the MCP boundary: tools an external AI may invoke
   origin-ai          inference the application performs itself
   origin-manifest    app.toml: what a product is, plus the security profiles
   origin-xtask       the maintenance tasks, as a library

@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 use origin_domain::{AppError, Result};
-use origin_mcp::{AiPermission, AiPermissions, McpServer, Tool, ToolDescriptor, ToolOutput};
+use origin_mcp_core::{AiPermission, AiPermissions, McpServer, Tool, ToolDescriptor, ToolOutput};
 use serde_json::{Value, json};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -61,7 +61,7 @@ impl Tool for Recorded {
     }
 }
 
-fn request(id: u32, method: &str, params: Value) -> origin_mcp::Request {
+fn request(id: u32, method: &str, params: Value) -> origin_mcp_core::Request {
     serde_json::from_value(json!({
         "jsonrpc": "2.0",
         "id": id,
@@ -71,13 +71,13 @@ fn request(id: u32, method: &str, params: Value) -> origin_mcp::Request {
     .expect("valid request")
 }
 
-fn result(response: &origin_mcp::Response) -> &Value {
+fn result(response: &origin_mcp_core::Response) -> &Value {
     response.result.as_ref().expect("a result, not an error")
 }
 
 fn initialize_params() -> Value {
     json!({
-        "protocolVersion": origin_mcp::PROTOCOL_VERSION,
+        "protocolVersion": origin_mcp_core::PROTOCOL_VERSION,
         "capabilities": {},
         "clientInfo": { "name": "origin-tests", "version": "1.0.0" }
     })
@@ -271,7 +271,7 @@ async fn a_notification_produces_no_response() {
         .await
         .unwrap();
 
-    let notification: origin_mcp::Request =
+    let notification: origin_mcp_core::Request =
         serde_json::from_value(json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }))
             .unwrap();
 

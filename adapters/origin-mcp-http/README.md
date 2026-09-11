@@ -11,7 +11,7 @@ for the rules this crate follows.
 ## Example
 
 ```rust
-use origin_mcp::McpServer;
+use origin_mcp_core::McpServer;
 use origin_mcp_http::{HttpTransport, Token};
 use std::sync::Arc;
 use tokio_util::sync::CancellationToken;

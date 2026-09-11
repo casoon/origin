@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 use origin_domain::Result;
-use origin_mcp::{AiPermission, AiPermissions, McpServer, Tool, ToolDescriptor, ToolOutput};
+use origin_mcp_core::{AiPermission, AiPermissions, McpServer, Tool, ToolDescriptor, ToolOutput};
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::io::BufReader;

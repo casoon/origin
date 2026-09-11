@@ -24,7 +24,7 @@ origin-events = { workspace = true }
 origin-platform = { workspace = true }
 origin-settings = { workspace = true }
 origin-storage = { workspace = true }
-origin-mcp = { workspace = true }
+origin-mcp-core = { workspace = true }
 origin-mcp-stdio = { workspace = true }
 origin-mcp-http = { workspace = true }
 origin-secrets = { workspace = true }

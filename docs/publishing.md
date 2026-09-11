@@ -7,14 +7,16 @@ version, not by path (see ADR-0026 and `crates/origin-xtask/src/scaffold.rs`). P
 This document is the checklist for the real thing. Publishing itself is a manual,
 deliberate act (`scripts/publish-crates.sh --execute`); nothing here runs on its own.
 
-## Why these 21, in this order
+## Why these 29, in this order
 
-Not every crate in the workspace is needed for a generated product — only the ones
-the template's own dependencies pull in, transitively. `origin-ai`, `origin-mcp`,
-`origin-auth-loopback`, `origin-mcp-stdio`, `origin-mcp-http`, `origin-process-std`,
-`origin-workspace-fs` and `origin-workspace-watch` are optional or demo/specialized adapters,
-so they are excluded for now; add them to `scripts/publish-crates.sh` when a real product needs
-one of them as a registry dependency.
+Every workspace crate is published except the demo and the repository's own `xtask`
+binary. The first 21 are what the template's own dependencies pull in, transitively; the
+last 8 (`origin-ai`, `origin-mcp-core`, `origin-auth-loopback`, `origin-mcp-stdio`,
+`origin-mcp-http`, `origin-process-std`, `origin-workspace-fs`, `origin-workspace-watch`)
+are optional crates a product adds when it needs them.
+
+The MCP boundary is published as `origin-mcp-core`: the name `origin-mcp` on crates.io
+belongs to an unrelated project.
 
 The order matters because `cargo publish` verifies a crate by resolving its
 dependencies against the registry, not against local paths: a crate cannot be
@@ -30,6 +32,9 @@ origin-accounts
 origin-app
 origin-tauri
 origin-xtask
+origin-ai, origin-mcp-core, origin-auth-loopback, origin-process-std,
+  origin-workspace-fs, origin-workspace-watch
+origin-mcp-stdio, origin-mcp-http
 ```
 
 (Crates on the same line don't depend on each other and could in principle publish in
@@ -43,7 +48,7 @@ order, so a partial run is easy to reason about.)
 - Crate name availability: run `scripts/publish-crates.sh --check-names` before the
   first real publish (needs network access to crates.io; degrades to "could not check"
   per name rather than failing if that access is unavailable).
-- All 21 crates are currently at `0.1.0`; that is fine as a first publish.
+- All 29 crates share the workspace version; the script publishes that version.
 
 ## Running it
 

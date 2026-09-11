@@ -40,7 +40,7 @@ fn session(requests: &[Value]) -> Vec<Value> {
                 0,
                 "initialize",
                 json!({
-                    "protocolVersion": origin_mcp::PROTOCOL_VERSION,
+                    "protocolVersion": origin_mcp_core::PROTOCOL_VERSION,
                     "capabilities": {},
                     "clientInfo": { "name": "origin-e2e", "version": "1.0.0" }
                 })

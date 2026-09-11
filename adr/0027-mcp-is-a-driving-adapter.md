@@ -37,7 +37,7 @@ The two are independent, separately switchable, and neither implies the other.
 An MCP server is a **driving adapter** — the same architectural role as the Tauri host
 or a CLI. It follows that:
 
-- Nothing in `origin-mcp` knows Tauri. The demo serves MCP over stdio with no window,
+- Nothing in `origin-mcp-core` knows Tauri. The demo serves MCP over stdio with no window,
   no desktop session and no display.
 - A tool wraps an *application service*, never a command. An operation that exists only
   as a Tauri command is not reachable from MCP, a CLI or a headless run — and writing a

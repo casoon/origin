@@ -1,4 +1,4 @@
-# origin-mcp
+# origin-mcp-core
 
 Model Context Protocol (MCP) server boundary for Origin applications.
 
@@ -11,7 +11,7 @@ for the rules this crate follows.
 ## Example
 
 ```rust
-use origin_mcp::{AiPermission, McpServer, Tool, ToolDescriptor, ToolOutput};
+use origin_mcp_core::{AiPermission, McpServer, Tool, ToolDescriptor, ToolOutput};
 use serde_json::Value;
 
 struct StatusTool;

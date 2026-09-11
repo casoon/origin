@@ -57,16 +57,14 @@ valid_categories=(
   web-programming::http-server web-programming::websocket
 )
 
-# All 21 crates currently share the workspace version; if one is ever bumped on its own,
+# All 29 crates currently share the workspace version; if one is ever bumped on its own,
 # switch its `wait_for_index`/`already_published` lookups to that crate's own version.
 workspace_version="$(grep -m1 '^version = ' "$root/Cargo.toml" | sed -E 's/version = "(.*)"/\1/')"
 
-# Every crate a generated product needs, in the order it must land on crates.io:
-# each entry may depend on any before it, never on one after it (see
-# crates/origin-xtask/src/scaffold.rs and docs/publishing.md for how that order was
-# derived). Optional crates (`origin-ai`, `origin-mcp`, `origin-auth-loopback`,
-# `origin-mcp-stdio`, `origin-mcp-http`, `origin-process-std`, `origin-workspace-fs`,
-# `origin-workspace-watch`) are deliberately absent: nothing in this list depends on them yet.
+# Every workspace crate except the demo and the repository's own `xtask` binary, in the
+# order it must land on crates.io: each entry may depend on any before it, never on one
+# after it (see docs/publishing.md for how that order was derived). The first 21 are what
+# a generated product needs; the last 8 are optional crates a product opts into.
 crates=(
   "origin-domain:crates"
   "origin-manifest:crates"
@@ -89,6 +87,14 @@ crates=(
   "origin-app:crates"
   "origin-tauri:host"
   "origin-xtask:crates"
+  "origin-ai:crates"
+  "origin-mcp-core:crates"
+  "origin-auth-loopback:adapters"
+  "origin-mcp-stdio:adapters"
+  "origin-mcp-http:adapters"
+  "origin-process-std:adapters"
+  "origin-workspace-fs:adapters"
+  "origin-workspace-watch:adapters"
 )
 
 execute=false
@@ -172,7 +178,7 @@ check_metadata() {
 # Uses `cargo info`, not `curl`: some sandboxed/CI network policies allow cargo's own
 # registry traffic while blocking arbitrary HTTPS clients, so `cargo info` is the more
 # reliable check — and it is literally the tool `--execute` publishes with. Run from a
-# scratch directory outside the workspace: inside it, every one of these 21 names
+# scratch directory outside the workspace: inside it, every one of these names
 # resolves to its local path dependency instead of querying the registry.
 check_names() {
   local taken=0

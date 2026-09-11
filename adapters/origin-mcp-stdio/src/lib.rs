@@ -13,7 +13,7 @@
 //! [`TelemetryConfig::for_stdout_protocol`]: https://docs.rs/origin-telemetry
 
 use origin_domain::{AppError, Result};
-use origin_mcp::McpServer;
+use origin_mcp_core::McpServer;
 use tokio::io::{AsyncBufReadExt, AsyncWrite, AsyncWriteExt, BufReader};
 
 /// Serve until the client closes stdin.

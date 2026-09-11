@@ -9,7 +9,7 @@ use crate::discovery::Discovery;
 use crate::http::{HttpRequest, HttpResponse, parse_request};
 use crate::{MCP_PATH, Token};
 use origin_domain::{AppError, Result};
-use origin_mcp::McpServer;
+use origin_mcp_core::McpServer;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};

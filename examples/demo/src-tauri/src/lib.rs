@@ -11,7 +11,7 @@ pub mod pulse;
 
 use connector::DemoConnector;
 use origin_app::{Application, ApplicationBuilder};
-use origin_mcp::McpServer;
+use origin_mcp_core::McpServer;
 use origin_mcp_http::{Discovery, HttpTransport, Token, is_alive, proxy_streams};
 use origin_platform::{NoopNotificationService, TrayBadge, TrayService};
 use origin_secrets::MemorySecretStore;
@@ -162,7 +162,7 @@ pub fn run_mcp() -> origin_domain::Result<()> {
     // stdout carries the protocol. A single log line there corrupts the stream, and the
     // client reports a parse error that points nowhere near logging.
     origin_telemetry::init(TelemetryConfig {
-        default_filter: "warn,origin_mcp=info".to_owned(),
+        default_filter: "warn,origin_mcp_core=info".to_owned(),
         ..TelemetryConfig::for_stdout_protocol()
     });
 

@@ -7,6 +7,10 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+homepage.workspace = true
+readme = "README.md"
+keywords = ["process", "allowlist", "tokio", "adapter", "tauri"]
+categories = ["os"]
 
 [dependencies]
 async-trait = { workspace = true }
