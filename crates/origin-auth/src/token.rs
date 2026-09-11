@@ -33,6 +33,21 @@ impl TokenSet {
         self.refresh_token.is_some()
     }
 
+    /// Credentials built from a token the user pasted in (B7/C1).
+    ///
+    /// A personal access token has neither a refresh token nor a stated expiry: it is
+    /// treated as long-lived until the service rejects it, at which point the account
+    /// is marked expired and the user pastes a new one. No OAuth flow is involved.
+    pub fn personal_access_token(token: impl Into<String>, scopes: Vec<String>) -> Self {
+        Self {
+            access_token: Secret::new(token),
+            refresh_token: None,
+            token_type: "Bearer".to_owned(),
+            expires_at: None,
+            scopes,
+        }
+    }
+
     /// Apply a refresh response.
     ///
     /// Many providers omit `refresh_token` when refreshing, meaning "keep using the one

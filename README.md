@@ -15,10 +15,13 @@ application that demonstrates all of it.
 
 ## Status
 
-Early. Implemented: the architecture contract, the platform contracts, the Tauri host
+Current release: **0.2.0**. The project is still pre-1.0.
+
+Implemented: the architecture contract, the platform contracts, the Tauri host
 layer, OAuth with PKCE, account management, the connector contract, the sync engine,
-background jobs, the app manifest with generated capabilities, and a running reference
-application.
+background jobs, local workspace/process contracts and adapters, MCP over stdio and
+authenticated loopback HTTP, the app manifest with generated capabilities, and a
+running reference application.
 
 Distribution is prepared in the template: a tag-driven release workflow that builds
 unsigned by default, states in the log what the artifact is, and turns signing on one
@@ -65,7 +68,7 @@ decision lives in [adr/](adr/).
 crates/            platform crates — never depend on Tauri, never know a product
   origin-domain      error model, domain primitives, Clock port
   origin-events      typed event bus
-  origin-platform    notification and opener contracts
+  origin-platform    OS contracts: notifications, workspace, process, tray and more
   origin-secrets     SecretStore contract + shared contract test suite
   origin-settings    typed settings
   origin-storage     Storage port + TTL cache
@@ -89,6 +92,10 @@ adapters/          concrete implementations of the contracts
   origin-http-reqwest        HTTP via reqwest
   origin-auth-loopback       RFC 8252 loopback redirect listener
   origin-mcp-stdio           MCP over stdio
+  origin-mcp-http            MCP over authenticated loopback HTTP
+  origin-process-std         allowlisted local process execution
+  origin-workspace-fs        workspace-scoped filesystem access
+  origin-workspace-watch     workspace filesystem watching
 
 host/origin-tauri  plugin wiring, tray, IPC commands, event bridge
 frontend/client    @origin/client — the only package that speaks Tauri IPC
@@ -129,7 +136,7 @@ Other tasks:
 
 ```bash
 cargo xtask validate   # enforce the architecture rules
-cargo xtask ci         # fmt + clippy + test + validate
+cargo xtask ci         # fmt + clippy + test + generated files + validate
 cargo test --workspace # Rust tests, no desktop session required
 pnpm -r check          # TypeScript and Svelte checks
 ```
@@ -167,9 +174,9 @@ cargo test -p origin-secrets-system -- --ignored
   has is visible in one function.
 - **Bring your own AI client, not your own API key.** MCP makes the application
   controllable by the AI the user already has — with a permission level of its own,
-  granting read and propose but never commit or delete, because the caller is a model
-  acting on content that may be hostile. Inference the application performs itself is a
-  separate, swappable port.
+  defaulting to read/propose only. Commit and delete require both an explicit grant and
+  a human confirmation; a missing or failed confirmation denies the call. Inference the
+  application performs itself is a separate, swappable port.
 - **Contracts generated, not mirrored.** Platform IPC types and each product's own
   command results are derived from their Rust definitions; a rename in Rust fails CI
   instead of surfacing as `undefined` in production.

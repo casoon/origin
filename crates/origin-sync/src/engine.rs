@@ -1,9 +1,9 @@
-use crate::source::{SyncContext, SyncResult, SyncSource};
+use crate::source::{SyncContext, SyncResult, SyncSource, SyncThrottle};
 use crate::state_store::SyncStateStore;
 use crate::{SyncPolicy, SyncTarget, health_of};
 use origin_domain::{
     AccountId, AppError, Clock, ConnectorId, ErrorKind, Health, Result, SyncId, SyncOutcome,
-    SyncState,
+    SyncState, ThrottleReason,
 };
 use origin_events::{EventBus, PlatformEvent, SyncCompleted, SyncFailed};
 use origin_storage::Storage;
@@ -142,7 +142,14 @@ impl SyncEngine {
         // No `min_interval` floor here: that is a throttle for *triggered* syncs
         // (see `sync_if_due`). Applying it to the scheduler would silently override an
         // explicitly configured `offline_retry`.
-        last_attempt + delay
+        let policy_due = last_attempt + delay;
+
+        // A service-imposed floor (quota reset, `X-Poll-Interval`) stretches the
+        // cadence but never shortens it.
+        match state.not_before {
+            Some(not_before) => policy_due.max(not_before),
+            None => policy_due,
+        }
     }
 
     /// Sync every target that is due at `now`.
@@ -330,6 +337,7 @@ impl SyncEngine {
                 if report.last_modified.is_some() {
                     state.last_modified = report.last_modified.clone();
                 }
+                self.apply_throttle(&mut state, report.throttle, &policy, target, now);
                 self.state.save(target, &state).await?;
 
                 tracing::debug!(changed = report.changed, "sync updated");
@@ -339,6 +347,10 @@ impl SyncEngine {
 
             Ok(SyncResult::NotModified) => {
                 state.record(now, SyncOutcome::NotModified);
+                // A validator hit carries no throttle of its own; any floor from the
+                // previous run has already passed by now, so clear it rather than
+                // leave stale bookkeeping behind.
+                state.clear_throttle();
                 self.state.save(target, &state).await?;
 
                 tracing::debug!("sync reported no change");
@@ -352,6 +364,19 @@ impl SyncEngine {
                     message: error.to_string(),
                 };
                 state.record(now, outcome.clone());
+
+                // A rate-limited response names its own retry delay. Honour it as a
+                // floor instead of letting the failure streak's exponential backoff
+                // decide alone — the service knows when its window reopens.
+                if let AppError::RateLimited {
+                    retry_after_seconds: Some(seconds),
+                    ..
+                } = &error
+                {
+                    let delay = Duration::seconds(*seconds as i64).min(policy.max_throttle);
+                    state.throttle_until(now + delay, ThrottleReason::RateLimited);
+                }
+
                 self.state.save(target, &state).await?;
 
                 let retry_at = Some(self.due_at_for(&state, &policy));
@@ -369,6 +394,40 @@ impl SyncEngine {
                 Err(error)
             }
         }
+    }
+
+    /// Apply a service-reported throttle, or clear a stale one.
+    ///
+    /// The delay is clamped to the policy's `max_throttle` so a buggy or hostile
+    /// response cannot freeze a target indefinitely.
+    fn apply_throttle(
+        &self,
+        state: &mut SyncState,
+        throttle: Option<SyncThrottle>,
+        policy: &SyncPolicy,
+        target: &SyncTarget,
+        now: OffsetDateTime,
+    ) {
+        let Some(throttle) = throttle else {
+            state.clear_throttle();
+            return;
+        };
+
+        let delay = if throttle.delay > policy.max_throttle {
+            tracing::warn!(
+                %target,
+                requested = ?throttle.delay,
+                max = ?policy.max_throttle,
+                reason = ?throttle.reason,
+                "server-imposed throttle clamped to the policy maximum"
+            );
+            policy.max_throttle
+        } else {
+            throttle.delay
+        };
+
+        tracing::debug!(%target, ?delay, reason = ?throttle.reason, "sync throttled by the service");
+        state.throttle_until(now + delay, throttle.reason);
     }
 
     /// Health across all registered targets — the worst state wins.

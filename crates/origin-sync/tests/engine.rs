@@ -9,6 +9,7 @@ use origin_events::{EventBus, PlatformEvent};
 use origin_storage::MemoryStorage;
 use origin_sync::{
     Backoff, SyncContext, SyncEngine, SyncPolicy, SyncReport, SyncResult, SyncSource, SyncTarget,
+    SyncThrottle,
 };
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -244,6 +245,176 @@ async fn failures_back_off_exponentially_and_recover() {
 }
 
 #[tokio::test]
+async fn a_server_interval_throttle_stretches_the_cadence() {
+    let harness = harness();
+    let source = ScriptedSource::new();
+    source.queue(Ok(SyncResult::Updated(
+        SyncReport::changed(1).with_throttle(SyncThrottle::server_interval(Duration::minutes(20))),
+    )));
+
+    let notifications = target("notifications");
+    harness.engine.register(
+        notifications.clone(),
+        policy(Duration::minutes(5)),
+        source.clone(),
+    );
+
+    harness.engine.run_due(harness.clock.now()).await;
+    assert_eq!(source.calls(), 1);
+
+    let state = harness.engine.state(&notifications).await.unwrap();
+    assert_eq!(
+        state.not_before,
+        Some(NOW + Duration::minutes(20)),
+        "the server interval must be persisted as the floor"
+    );
+    assert_eq!(
+        harness.engine.due_at(&notifications).await.unwrap(),
+        NOW + Duration::minutes(20),
+        "the server interval must stretch the 5-minute cadence"
+    );
+}
+
+#[tokio::test]
+async fn a_quota_throttle_reported_in_the_body_stretches_the_cadence() {
+    let harness = harness();
+    let source = ScriptedSource::new();
+    source.queue(Ok(SyncResult::Updated(
+        SyncReport::changed(5).with_throttle(SyncThrottle::quota(Duration::minutes(30))),
+    )));
+
+    let notifications = target("analytics");
+    harness.engine.register(
+        notifications.clone(),
+        policy(Duration::minutes(5)),
+        source.clone(),
+    );
+
+    harness.engine.run_due(harness.clock.now()).await;
+    assert_eq!(source.calls(), 1);
+
+    let state = harness.engine.state(&notifications).await.unwrap();
+    assert_eq!(
+        state.throttle_reason,
+        Some(origin_domain::ThrottleReason::Quota)
+    );
+    assert_eq!(
+        harness.engine.due_at(&notifications).await.unwrap(),
+        NOW + Duration::minutes(30)
+    );
+}
+
+#[tokio::test]
+async fn a_throttle_longer_than_max_is_clamped() {
+    let harness = harness();
+    let source = ScriptedSource::new();
+    source.queue(Ok(SyncResult::Updated(
+        SyncReport::changed(1).with_throttle(SyncThrottle::quota(Duration::hours(100))),
+    )));
+
+    let notifications = target("notifications");
+    harness.engine.register(
+        notifications.clone(),
+        policy(Duration::minutes(5)).with_max_throttle(Duration::hours(1)),
+        source.clone(),
+    );
+
+    harness.engine.run_due(harness.clock.now()).await;
+    assert_eq!(source.calls(), 1);
+
+    let state = harness.engine.state(&notifications).await.unwrap();
+    assert_eq!(
+        state.not_before,
+        Some(NOW + Duration::hours(1)),
+        "a 100-hour throttle must be clamped to the 1-hour policy maximum"
+    );
+}
+
+#[tokio::test]
+async fn a_throttle_clears_after_a_not_modified_run() {
+    let harness = harness();
+    let source = ScriptedSource::new();
+    source
+        .queue(Ok(SyncResult::Updated(
+            SyncReport::changed(1).with_throttle(SyncThrottle::quota(Duration::minutes(20))),
+        )))
+        .queue(Ok(SyncResult::NotModified));
+
+    let notifications = target("notifications");
+    harness.engine.register(
+        notifications.clone(),
+        policy(Duration::minutes(5)),
+        source.clone(),
+    );
+
+    // First run sets a 20-minute throttle.
+    harness.engine.run_due(harness.clock.now()).await;
+    assert_eq!(source.calls(), 1);
+    assert_eq!(
+        harness.engine.due_at(&notifications).await.unwrap(),
+        NOW + Duration::minutes(20)
+    );
+
+    // Advance past the throttle window.
+    harness.clock.advance(Duration::minutes(21));
+    harness.engine.run_due(harness.clock.now()).await;
+    assert_eq!(
+        source.calls(),
+        2,
+        "the next run must happen after the throttle passes"
+    );
+
+    let state = harness.engine.state(&notifications).await.unwrap();
+    assert!(
+        state.not_before.is_none(),
+        "a NotModified must clear the throttle"
+    );
+    // After a NotModified, the cadence follows the policy again.
+    assert_eq!(
+        harness.engine.due_at(&notifications).await.unwrap(),
+        harness.clock.now() + Duration::minutes(5)
+    );
+}
+
+#[tokio::test]
+async fn a_rate_limited_error_retry_after_beats_exponential_backoff() {
+    let harness = harness();
+    let source = ScriptedSource::new();
+    source.queue(Err(AppError::RateLimited {
+        message: "secondary limit".into(),
+        retry_after_seconds: Some(60),
+    }));
+
+    let notifications = target("notifications");
+    harness.engine.register(
+        notifications.clone(),
+        policy(Duration::minutes(5)),
+        source.clone(),
+    );
+
+    harness.engine.run_due(harness.clock.now()).await;
+    assert_eq!(source.calls(), 1);
+
+    let state = harness.engine.state(&notifications).await.unwrap();
+    assert_eq!(
+        state.failure_streak, 1,
+        "rate-limited still counts as a failure"
+    );
+    assert_eq!(
+        state.throttle_reason,
+        Some(origin_domain::ThrottleReason::RateLimited),
+        "retry_after must be recorded as the reason"
+    );
+
+    // The backoff for one failure is 30 s, but retry_after is 60 s — the floor wins.
+    assert_eq!(
+        harness.engine.due_at(&notifications).await.unwrap(),
+        NOW + Duration::seconds(60),
+        "retry_after=60 must stretch the 30-second backoff"
+    );
+}
+
+#[tokio::test]
 async fn being_offline_retries_soon_instead_of_backing_off_for_half_an_hour() {
     let harness = harness();
     let source = ScriptedSource::new();
@@ -381,7 +552,7 @@ async fn a_failed_sync_publishes_when_it_will_be_retried() {
     match stream.recv().await.unwrap() {
         PlatformEvent::SyncFailed(event) => {
             assert_eq!(event.kind, ErrorKind::RateLimited);
-            assert_eq!(event.retry_at, Some(NOW + Duration::seconds(30)));
+            assert_eq!(event.retry_at, Some(NOW + Duration::seconds(60)));
         }
         other => panic!("expected SyncFailed, got {other:?}"),
     }

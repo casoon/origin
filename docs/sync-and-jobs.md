@@ -67,6 +67,14 @@ user who explicitly asked for a refresh should get one.
 - **Single-flight**: a second caller waits for the run in flight rather than starting a
   parallel one, which would race on the validators.
 
+## Throttling and rate limits
+
+When an external service signals that requests should be slowed down:
+- **`SyncThrottle::quota(delay)`**: Used when the response body reports a consumed quota or cost budget reset (G6).
+- **`SyncThrottle::server_interval(delay)`**: Used when headers (e.g. `Retry-After`, `X-Poll-Interval`) prescribe a minimum interval (G7).
+
+Throttles can be attached to `SyncReport::with_throttle` (when data was still returned) or returned directly via `SyncResult::Throttled`. The sync engine defers the next run until `delay` has passed. To defend against hostile or broken servers pushing runs indefinitely into the future, the delay is clamped to `SyncPolicy.max_throttle` (defaults to 24 hours).
+
 ## Testing scheduling without waiting
 
 `run_due(now)` does one pass for a given instant, and the background loop is a thin

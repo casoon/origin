@@ -26,6 +26,7 @@ origin-settings = { workspace = true }
 origin-storage = { workspace = true }
 origin-mcp = { workspace = true }
 origin-mcp-stdio = { workspace = true }
+origin-mcp-http = { workspace = true }
 origin-secrets = { workspace = true }
 origin-storage-sqlite = { workspace = true }
 origin-sync = { workspace = true }
@@ -36,6 +37,7 @@ serde_json = { workspace = true }
 tauri = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true }
+tokio-util = { workspace = true }
 tracing = { workspace = true }
 ts-rs = { workspace = true }
 

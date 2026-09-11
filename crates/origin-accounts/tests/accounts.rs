@@ -186,6 +186,42 @@ async fn accounts_of_different_connectors_do_not_mix() {
 }
 
 #[tokio::test]
+async fn a_pasted_token_connects_an_account_without_an_oauth_flow() {
+    let harness = harness();
+    let cloudflare = ConnectorId::new("cloudflare");
+
+    let account = harness
+        .service
+        .connect_with_token(
+            &cloudflare,
+            "main",
+            "cf-pat-123",
+            vec!["zone.read".to_owned()],
+        )
+        .await
+        .unwrap();
+
+    let stored = harness
+        .tokens
+        .load(&cloudflare, &account.id)
+        .await
+        .unwrap()
+        .expect("a pasted token must be stored");
+
+    assert_eq!(stored.access_token.expose(), "cf-pat-123");
+    assert!(
+        stored.refresh_token.is_none(),
+        "a personal access token has no refresh token"
+    );
+    assert!(
+        stored.expires_at.is_none(),
+        "a personal access token is treated as long-lived"
+    );
+    assert_eq!(stored.scopes, vec!["zone.read".to_owned()]);
+    assert!(!stored.can_refresh());
+}
+
+#[tokio::test]
 async fn connecting_stores_credentials_addressed_by_account() {
     let harness = harness();
     let github = ConnectorId::new("github");

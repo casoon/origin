@@ -8,7 +8,12 @@ use origin_domain::{AppError, Clock, SystemClock};
 use origin_events::EventBus;
 use origin_http::HttpClient;
 use origin_jobs::Jobs;
-use origin_platform::{NoopNotificationService, NotificationService, Opener};
+use origin_platform::{
+    ConfirmationService, DenyingConfirmationService, GlobalShortcutService, MemoryProcessRunner,
+    MemoryWorkspaceFs, MemoryWorkspaceWatcher, NoopGlobalShortcutService, NoopNotificationService,
+    NotificationService, Opener, ProcessAllowlist, ProcessRunner, TrayService, WorkspaceFs,
+    WorkspaceWatcher,
+};
 use origin_secrets::{MemorySecretStore, SecretStore};
 use origin_settings::{Settings, StorageSettingsStore};
 use origin_storage::{Cache, MemoryStorage, Storage};
@@ -45,8 +50,17 @@ pub struct ApplicationBuilder {
     notifications: Option<Arc<dyn NotificationService>>,
     opener: Option<Arc<dyn Opener>>,
     http: Option<Arc<dyn HttpClient>>,
+    /// Human confirmation for operations that need it. Defaults to deny-all
+    /// (fail-closed) so a product that never wires a real prompt is safe.
+    confirmation: Arc<dyn ConfirmationService>,
+    /// The system tray, present only when the product declared it.
+    tray: Option<Arc<dyn TrayService>>,
     connectors: ConnectorRegistry,
     modules: Vec<Box<dyn ApplicationModule>>,
+    workspace_fs: Option<Arc<dyn WorkspaceFs>>,
+    workspace_watcher: Option<Arc<dyn WorkspaceWatcher>>,
+    process_runner: Option<Arc<dyn ProcessRunner>>,
+    global_shortcuts: Option<Arc<dyn GlobalShortcutService>>,
 }
 
 impl Default for ApplicationBuilder {
@@ -65,8 +79,14 @@ impl ApplicationBuilder {
             notifications: None,
             opener: None,
             http: None,
+            confirmation: Arc::new(DenyingConfirmationService),
+            tray: None,
             connectors: ConnectorRegistry::new(),
             modules: Vec::new(),
+            workspace_fs: None,
+            workspace_watcher: None,
+            process_runner: None,
+            global_shortcuts: None,
         }
     }
 
@@ -79,6 +99,12 @@ impl ApplicationBuilder {
             .storage(Arc::new(MemoryStorage::new()))
             .secret_store(Arc::new(MemorySecretStore::new()))
             .notifications(Arc::new(NoopNotificationService))
+            .workspace_fs(Arc::new(MemoryWorkspaceFs::new()))
+            .workspace_watcher(Arc::new(MemoryWorkspaceWatcher::new()))
+            .process_runner(Arc::new(MemoryProcessRunner::success(
+                ProcessAllowlist::default(),
+            )))
+            .global_shortcuts(Arc::new(NoopGlobalShortcutService))
     }
 
     pub fn clock(mut self, clock: Arc<dyn Clock>) -> Self {
@@ -114,6 +140,21 @@ impl ApplicationBuilder {
         self
     }
 
+    /// Override the human confirmation service. The default denies everything, so a
+    /// product that grants MCP mutation *must* call this — the error message in the
+    /// MCP tool response tells the product author why.
+    pub fn confirmation(mut self, confirmation: Arc<dyn ConfirmationService>) -> Self {
+        self.confirmation = confirmation;
+        self
+    }
+
+    /// Give the application a system tray. Products without a tray never call this
+    /// and get `None` — modules that need one see it through the platform.
+    pub fn tray(mut self, tray: Arc<dyn TrayService>) -> Self {
+        self.tray = Some(tray);
+        self
+    }
+
     /// Give the application an HTTP client.
     ///
     /// One client for the whole application: it owns the connection pool, and several
@@ -129,6 +170,30 @@ impl ApplicationBuilder {
     /// and is therefore auditable (ADR-0006).
     pub fn connector(mut self, connector: impl Connector) -> Self {
         self.connectors.insert(Arc::new(connector));
+        self
+    }
+
+    /// Give the application a workspace filesystem adapter (B2).
+    pub fn workspace_fs(mut self, workspace_fs: Arc<dyn WorkspaceFs>) -> Self {
+        self.workspace_fs = Some(workspace_fs);
+        self
+    }
+
+    /// Give the application a workspace watcher adapter (B3).
+    pub fn workspace_watcher(mut self, workspace_watcher: Arc<dyn WorkspaceWatcher>) -> Self {
+        self.workspace_watcher = Some(workspace_watcher);
+        self
+    }
+
+    /// Give the application a process runner adapter (B1).
+    pub fn process_runner(mut self, process_runner: Arc<dyn ProcessRunner>) -> Self {
+        self.process_runner = Some(process_runner);
+        self
+    }
+
+    /// Give the application a global shortcut service adapter (B5).
+    pub fn global_shortcuts(mut self, global_shortcuts: Arc<dyn GlobalShortcutService>) -> Self {
+        self.global_shortcuts = Some(global_shortcuts);
         self
     }
 
@@ -175,10 +240,16 @@ impl ApplicationBuilder {
             secrets,
             settings,
             notifications,
+            confirmation: self.confirmation,
+            tray: self.tray,
             accounts,
             connectors: self.connectors,
             opener: self.opener,
             http: self.http,
+            workspace_fs: self.workspace_fs,
+            workspace_watcher: self.workspace_watcher,
+            process_runner: self.process_runner,
+            global_shortcuts: self.global_shortcuts,
         };
 
         let mut registry = ModuleRegistry::new(platform.clone());
@@ -281,6 +352,31 @@ mod tests {
             app.platform().opener().unwrap_err().kind(),
             origin_domain::ErrorKind::Permission
         );
+    }
+
+    #[test]
+    fn in_memory_wires_workspace_and_process_and_shortcuts() {
+        let app = ApplicationBuilder::in_memory().build().unwrap();
+
+        assert!(app.platform().workspace_fs().is_ok());
+        assert!(app.platform().workspace_watcher().is_ok());
+        assert!(app.platform().process_runner().is_ok());
+        assert!(app.platform().global_shortcuts().is_ok());
+    }
+
+    #[test]
+    fn clean_build_reports_missing_workspace_components() {
+        let app = ApplicationBuilder::new()
+            .storage(Arc::new(MemoryStorage::new()))
+            .secret_store(Arc::new(MemorySecretStore::new()))
+            .notifications(Arc::new(NoopNotificationService))
+            .build()
+            .unwrap();
+
+        assert!(app.platform().workspace_fs().is_err());
+        assert!(app.platform().workspace_watcher().is_err());
+        assert!(app.platform().process_runner().is_err());
+        assert!(app.platform().global_shortcuts().is_err());
     }
 
     #[test]

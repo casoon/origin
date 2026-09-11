@@ -64,8 +64,9 @@ workspace_version="$(grep -m1 '^version = ' "$root/Cargo.toml" | sed -E 's/versi
 # Every crate a generated product needs, in the order it must land on crates.io:
 # each entry may depend on any before it, never on one after it (see
 # crates/origin-xtask/src/scaffold.rs and docs/publishing.md for how that order was
-# derived). `origin-ai`, `origin-mcp`, `origin-auth-loopback` and `origin-mcp-stdio`
-# are deliberately absent: nothing in this list depends on them yet.
+# derived). Optional crates (`origin-ai`, `origin-mcp`, `origin-auth-loopback`,
+# `origin-mcp-stdio`, `origin-mcp-http`, `origin-process-std`, `origin-workspace-fs`,
+# `origin-workspace-watch`) are deliberately absent: nothing in this list depends on them yet.
 crates=(
   "origin-domain:crates"
   "origin-manifest:crates"

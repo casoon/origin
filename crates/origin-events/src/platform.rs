@@ -60,6 +60,18 @@ pub struct AccountExpired {
     pub connector: ConnectorId,
 }
 
+/// A product-provided tray menu item was selected (G10).
+///
+/// The host does not call product code: it publishes this, and the module that owns
+/// the menu reacts. `id` is exactly the string the product passed to
+/// `TrayService::set_menu`, so a renamed menu entry stays a compile-time concern on
+/// the product side.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+pub struct TrayItemSelected {
+    pub id: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 pub struct JobStarted {
@@ -101,6 +113,7 @@ pub enum PlatformEvent {
     AlertRaised(AlertRaised),
     AlertResolved(AlertResolved),
     AccountExpired(AccountExpired),
+    TrayItemSelected(TrayItemSelected),
     JobStarted(JobStarted),
     JobProgress(JobProgress),
     JobFinished(JobFinished),
@@ -114,6 +127,7 @@ impl Event for PlatformEvent {
             Self::AlertRaised(_) => "platform.alert.raised",
             Self::AlertResolved(_) => "platform.alert.resolved",
             Self::AccountExpired(_) => "platform.account.expired",
+            Self::TrayItemSelected(_) => "platform.tray.selected",
             Self::JobStarted(_) => "platform.job.started",
             Self::JobProgress(_) => "platform.job.progress",
             Self::JobFinished(_) => "platform.job.finished",

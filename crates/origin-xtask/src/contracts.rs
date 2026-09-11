@@ -71,6 +71,7 @@ pub(crate) fn render() -> Result<String, String> {
         origin_domain::Job,
         origin_domain::SyncOutcome,
         origin_domain::SyncState,
+        origin_domain::ThrottleReason,
         origin_domain::ProductPermission,
         origin_domain::PlatformPermission,
         // connectors
@@ -88,6 +89,7 @@ pub(crate) fn render() -> Result<String, String> {
         origin_events::AlertRaised,
         origin_events::AlertResolved,
         origin_events::AccountExpired,
+        origin_events::TrayItemSelected,
         origin_events::JobStarted,
         origin_events::JobProgress,
         origin_events::JobFinished,
@@ -103,5 +105,24 @@ pub(crate) fn render() -> Result<String, String> {
         let _ = write!(rendered, "\nexport {declaration}\n");
     }
 
-    Ok(rendered)
+    Ok(rendered
+        .lines()
+        .map(str::trim_end)
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn exports_dependency_types_referenced_by_generated_contracts() {
+        let rendered = render().unwrap();
+
+        assert!(rendered.contains("export type ThrottleReason ="));
+        assert!(rendered.contains("export type TrayItemSelected ="));
+        assert!(rendered.lines().all(|line| line.trim_end() == line));
+    }
 }

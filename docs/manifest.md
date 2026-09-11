@@ -73,14 +73,29 @@ A window picks a *named profile*, not a permission list:
 | `readonly-dashboard` | reads state, receives events |
 | `standard-dashboard` | the usual main window |
 | `account-settings` | manages accounts through commands |
+| `local-workspace` | workspace window: reads files under user-confirmed roots and executes allowlisted programs via Origin commands |
 
-No profile grants filesystem, shell or process access — a unit test asserts exactly
-that. Permissions are listed explicitly rather than pulling in a plugin's `default` set,
-because a plugin default grows when the plugin is updated and silently widens every
+No profile grants direct filesystem, shell or process access through Tauri plugins — a unit test asserts
+exactly that. Windows using `local-workspace` interact with the local filesystem and external tools strictly
+through Origin IPC commands and Rust ports (`WorkspaceFs`, `ProcessRunner`), which enforce symlink containment
+and executable allowlists in Rust before reaching the OS. Permissions are listed explicitly rather than pulling in a
+plugin's `default` set, because a plugin default grows when the plugin is updated and silently widens every
 window that used it.
 
 To change what a profile *means*, change it in `origin-manifest`. It then changes for
 every Origin application at once and is reviewed once instead of per project.
+
+## Process execution allowlist
+
+Products that need to invoke external tools declare an auditable allowlist in `app.toml`:
+
+```toml
+[security.process]
+allowed_programs = ["git", "code"]
+```
+
+Entry names are validated at manifest load time (paths with directory separators are rejected)
+and enforced in Rust by `ProcessAllowlist` before execution reaches the operating system.
 
 ## Validation
 

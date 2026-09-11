@@ -86,3 +86,16 @@ agrees on expiry, and TTL behaviour is testable without sleeping.
 
 External services stay Source of Truth. Deleting the local database costs a resync and
 nothing else.
+
+## Platform contracts
+
+Host- and OS-specific capabilities are defined as traits in `origin-platform`, keeping domain logic and modules free from desktop framework details:
+
+- **`WorkspaceFs`**: Read-only access to directory listings and files, confined to a user-confirmed `WorkspaceRoot` with symlink traversal protection.
+- **`WorkspaceWatcher`**: Subscribes to filesystem changes within registered repository roots.
+- **`ProcessRunner`**: Starts external processes strictly constrained by an auditable `ProcessAllowlist`.
+- **`GlobalShortcutService`**: Registers system-wide key combinations (e.g. for quick capture).
+- **`ConfirmationService`**: Prompts the user before sensitive actions (e.g. mutating MCP tool calls, loopback token grants). Defaults to `DenyingConfirmationService`.
+- **`TrayService`**: Manages system tray items, status badges, and context menu events.
+
+Each contract provides a corresponding in-memory implementation in `origin-platform` (`MemoryWorkspaceFs`, `MemoryWorkspaceWatcher`, `MemoryProcessRunner`, `NoopGlobalShortcutService`), ensuring full testability in headless environments.

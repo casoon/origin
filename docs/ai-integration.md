@@ -2,7 +2,8 @@
 
 Decisions: [ADR-0027](../adr/0027-mcp-is-a-driving-adapter.md),
 [ADR-0028](../adr/0028-the-ai-provider-port.md),
-[ADR-0029](../adr/0029-the-ai-permission-level.md).
+[ADR-0029](../adr/0029-the-ai-permission-level.md),
+[ADR-0031](../adr/0031-mcp-over-http.md).
 
 ## Two boundaries, not one
 
@@ -131,12 +132,28 @@ the stream and the client reports a parse error that points nowhere near logging
 origin_telemetry::init(TelemetryConfig::for_stdout_protocol());
 ```
 
+## HTTP loopback & running instance attach
+
+While stdio serves headless execution when the application is not running, desktop users
+already have the GUI open. Spawning a second desktop process would collide with single-instance
+locks and create split-brain database states.
+
+Origin provides `origin-mcp-http` (ADR-0031):
+- The running GUI binds an ephemeral HTTP loopback endpoint (`127.0.0.1:0`, path `/mcp`).
+- The port and product metadata are written to an application discovery file (`mcp-http.json`).
+- Access requires a 256-bit CSPRNG bearer token (`Authorization: Bearer <token>`), negotiated via
+  a user confirmation prompt in the GUI (G19).
+- If invoked via stdio while the GUI is running, the CLI transparently proxies standard I/O streams
+  to the running GUI's loopback endpoint.
+
+## Visibility and safety
+
+- **Activity indication:** AI operations are surfaced to the user (e.g. tray badge/activity state).
+- **Mutating operations:** Mutations must be gated by `ConfirmationService`. A default `DenyingConfirmationService`
+  ensures unprompted mutations fail closed.
+- **Audit logging:** Invocations and permission denials are recorded via telemetry.
+
 ## Open questions
 
-- **Process model.** A headless instance started by an AI client opens the same database
-  as a running GUI. Single-instance behaviour and locking need a decision before a
-  product relies on it.
-- **Visibility.** The user should see when an external AI is operating their
-  application — a tray indicator, a log, a confirmation for anything mutating.
 - **Protocol revision.** The envelope was written against the stable core of MCP;
-  verify it against the current specification before connecting a real client.
+  verify it against the current specification before connecting a real client (→ Plan 05).

@@ -17,6 +17,14 @@ pub enum SecurityProfile {
     /// Manages accounts and credentials. Credential handling itself happens in Rust —
     /// this profile does not grant the frontend access to secrets.
     AccountSettings,
+
+    /// A workspace window that may read files under user-confirmed roots and execute
+    /// programs listed in the process allowlist.
+    ///
+    /// This is the narrowest useful grant for a window that touches the local file
+    /// system — explicitly *not* `fs:default` / `shell:default`, and every permission
+    /// maps to a platform contract (ADR-0007).
+    LocalWorkspace,
 }
 
 impl SecurityProfile {
@@ -25,10 +33,6 @@ impl SecurityProfile {
     /// Listed explicitly rather than pulling in a plugin's `default` set: a plugin
     /// default grows when the plugin is updated, silently widening every window that
     /// used it.
-    ///
-    /// Note what no profile grants: filesystem, shell or process access. Opening URLs
-    /// and showing notifications happen in Rust behind platform contracts, so the
-    /// frontend needs no permission for either.
     pub fn permissions(self) -> &'static [&'static str] {
         match self {
             Self::ReadonlyDashboard => &[
@@ -47,6 +51,11 @@ impl SecurityProfile {
                 "core:event:allow-unlisten",
                 "core:window:allow-close",
             ],
+            Self::LocalWorkspace => &[
+                "core:default",
+                "core:event:allow-listen",
+                "core:event:allow-unlisten",
+            ],
         }
     }
 
@@ -55,6 +64,7 @@ impl SecurityProfile {
             Self::ReadonlyDashboard => "readonly-dashboard",
             Self::StandardDashboard => "standard-dashboard",
             Self::AccountSettings => "account-settings",
+            Self::LocalWorkspace => "local-workspace",
         }
     }
 
@@ -72,6 +82,10 @@ impl SecurityProfile {
                 "Settings window: manages accounts through commands. Credentials never \
                  reach the frontend."
             }
+            Self::LocalWorkspace => {
+                "Workspace window: access to workspace files and allowlisted processes \
+                 via Origin commands. No direct Tauri fs or shell plugin access."
+            }
         }
     }
 }
@@ -81,12 +95,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn no_profile_grants_filesystem_shell_or_process_access() {
-        for profile in [
+    fn no_profile_grants_fs_shell_or_process() {
+        let profiles = [
             SecurityProfile::ReadonlyDashboard,
             SecurityProfile::StandardDashboard,
             SecurityProfile::AccountSettings,
-        ] {
+            SecurityProfile::LocalWorkspace,
+        ];
+
+        for profile in profiles {
             for permission in profile.permissions() {
                 assert!(
                     !permission.starts_with("fs:")
@@ -97,6 +114,37 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn all_profiles_have_unique_identifiers() {
+        let profiles = [
+            SecurityProfile::ReadonlyDashboard,
+            SecurityProfile::StandardDashboard,
+            SecurityProfile::AccountSettings,
+            SecurityProfile::LocalWorkspace,
+        ];
+
+        let mut seen: std::collections::HashSet<&str> = std::collections::HashSet::new();
+        for profile in profiles {
+            let id = profile.identifier();
+            assert!(seen.insert(id), "duplicate identifier: {id}");
+            assert!(
+                !profile.description().is_empty(),
+                "{id}: description must not be empty"
+            );
+        }
+    }
+
+    #[test]
+    fn local_workspace_round_trips_through_the_manifest_format() {
+        let parsed: SecurityProfile = toml::from_str("value = \"local-workspace\"")
+            .map(|table: toml::Table| table["value"].clone())
+            .map(|value| value.try_into().unwrap())
+            .unwrap();
+
+        assert_eq!(parsed, SecurityProfile::LocalWorkspace);
+        assert_eq!(parsed.identifier(), "local-workspace");
     }
 
     #[test]

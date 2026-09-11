@@ -1,8 +1,38 @@
 use crate::SyncTarget;
 use async_trait::async_trait;
-use origin_domain::{Result, SyncId, SyncState};
+use origin_domain::{Result, SyncId, SyncState, ThrottleReason};
 use std::fmt::Debug;
+use time::Duration;
 use tokio_util::sync::CancellationToken;
+
+/// A service-imposed limit on how soon the next run may happen.
+///
+/// The connector reports it; the engine owns scheduling. It arrives in two shapes —
+/// a *quota* the service reported in the body, and a *minimum poll interval* — but is
+/// handled identically: the next run may not start before `delay` has elapsed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SyncThrottle {
+    pub delay: Duration,
+    pub reason: ThrottleReason,
+}
+
+impl SyncThrottle {
+    /// A quota or cost reported in the body, not a header (G6).
+    pub fn quota(delay: Duration) -> Self {
+        Self {
+            delay,
+            reason: ThrottleReason::Quota,
+        }
+    }
+
+    /// A minimum poll interval the service named (G7).
+    pub fn server_interval(delay: Duration) -> Self {
+        Self {
+            delay,
+            reason: ThrottleReason::ServerInterval,
+        }
+    }
+}
 
 /// What one successful sync produced.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -12,6 +42,9 @@ pub struct SyncReport {
     /// Validator to send on the next request, if the service issued one.
     pub etag: Option<String>,
     pub last_modified: Option<String>,
+    /// A throttle the service reported alongside the data. `None` keeps the policy
+    /// cadence; `Some` pushes the next run back to at least `delay` from now.
+    pub throttle: Option<SyncThrottle>,
 }
 
 impl SyncReport {
@@ -29,6 +62,11 @@ impl SyncReport {
 
     pub fn with_last_modified(mut self, last_modified: impl Into<String>) -> Self {
         self.last_modified = Some(last_modified.into());
+        self
+    }
+
+    pub fn with_throttle(mut self, throttle: SyncThrottle) -> Self {
+        self.throttle = Some(throttle);
         self
     }
 }

@@ -47,3 +47,4 @@ An ADR is never edited to change its decision — it is superseded by a new one.
 | [0028](0028-the-ai-provider-port.md) | The AI Provider Port | Accepted |
 | [0029](0029-the-ai-permission-level.md) | The AI Permission Level | Accepted |
 | [0030](0030-distribution.md) | Distribution | Accepted |
+| [0031](0031-mcp-over-http.md) | MCP over Local HTTP Loopback | Accepted |

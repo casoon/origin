@@ -99,6 +99,8 @@
         return "alert resolved";
       case "account_expired":
         return `account expired: ${event.account}`;
+      case "tray_item_selected":
+        return `tray item selected: ${event.id}`;
       case "job_started":
         return `job started: ${event.kind}`;
       case "job_progress":

@@ -25,6 +25,13 @@ pub struct SyncPolicy {
     /// step, and backing off for half an hour would leave the app stale long after
     /// the network came back.
     pub offline_retry: Duration,
+
+    /// The longest a service may push this target's next run into the future.
+    ///
+    /// A service-reported throttle (quota reset, `X-Poll-Interval`) is honoured up
+    /// to this bound. Without it, a buggy or hostile response could freeze a target
+    /// indefinitely; past the bound the delay is clamped and a warning is logged.
+    pub max_throttle: Duration,
 }
 
 impl Default for SyncPolicy {
@@ -34,6 +41,7 @@ impl Default for SyncPolicy {
             min_interval: Duration::seconds(30),
             backoff: Backoff::default(),
             offline_retry: Duration::seconds(20),
+            max_throttle: Duration::hours(24),
         }
     }
 }
@@ -61,6 +69,11 @@ impl SyncPolicy {
 
     pub fn with_offline_retry(mut self, offline_retry: Duration) -> Self {
         self.offline_retry = offline_retry;
+        self
+    }
+
+    pub fn with_max_throttle(mut self, max_throttle: Duration) -> Self {
+        self.max_throttle = max_throttle;
         self
     }
 }

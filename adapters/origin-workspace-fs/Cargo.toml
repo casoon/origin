@@ -1,0 +1,23 @@
+[package]
+name = "origin-workspace-fs"
+description = "WorkspaceFs over the local filesystem: read-only access under user-confirmed roots."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+origin-domain = { workspace = true }
+origin-platform = { workspace = true }
+tokio = { workspace = true, features = ["fs"] }
+
+[dev-dependencies]
+origin-platform = { workspace = true, features = ["testing"] }
+origin-domain = { workspace = true, features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "fs"] }
+
+[lints]
+workspace = true

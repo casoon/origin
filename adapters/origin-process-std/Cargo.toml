@@ -1,0 +1,24 @@
+[package]
+name = "origin-process-std"
+description = "ProcessRunner over the local machine: start allowlisted programs and read their output."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+origin-domain = { workspace = true }
+origin-platform = { workspace = true }
+tokio = { workspace = true, features = ["process"] }
+tracing = { workspace = true }
+
+[dev-dependencies]
+origin-domain = { workspace = true, features = ["testing"] }
+origin-platform = { workspace = true, features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "process"] }
+
+[lints]
+workspace = true

@@ -11,8 +11,9 @@ deliberate act (`scripts/publish-crates.sh --execute`); nothing here runs on its
 
 Not every crate in the workspace is needed for a generated product — only the ones
 the template's own dependencies pull in, transitively. `origin-ai`, `origin-mcp`,
-`origin-auth-loopback` and `origin-mcp-stdio` are used by `examples/demo` only, so they
-are excluded for now; add them to `scripts/publish-crates.sh` when a real product needs
+`origin-auth-loopback`, `origin-mcp-stdio`, `origin-mcp-http`, `origin-process-std`,
+`origin-workspace-fs` and `origin-workspace-watch` are optional or demo/specialized adapters,
+so they are excluded for now; add them to `scripts/publish-crates.sh` when a real product needs
 one of them as a registry dependency.
 
 The order matters because `cargo publish` verifies a crate by resolving its

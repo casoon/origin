@@ -33,11 +33,12 @@ pub use commands::CommandError;
 pub use config::HostConfig;
 pub use opener::TauriOpener;
 pub use state::OriginState;
+pub use tray::TauriTrayService;
 
 pub use origin_notifications_tauri::TauriNotificationService;
 
 use origin_app::Application;
-use tauri::{AppHandle, Manager, Wry};
+use tauri::{AppHandle, Manager, Runtime, Wry};
 use tokio_util::sync::CancellationToken;
 
 /// A `tauri::Builder` with the Origin plugin set already registered.
@@ -79,7 +80,7 @@ pub fn attach(app: &AppHandle, application: Application, config: &HostConfig) ->
     bridge::forward_platform_events(app, state.application());
 
     if config.tray {
-        tray::install(app, config)?;
+        tray::install(app, config, state.application().platform().events.clone())?;
     }
 
     app.manage(state);
@@ -89,7 +90,7 @@ pub fn attach(app: &AppHandle, application: Application, config: &HostConfig) ->
 
 /// Show and focus the main window, creating nothing — if it was closed to tray it is
 /// only hidden.
-pub fn focus_main_window(app: &AppHandle) {
+pub fn focus_main_window<R: Runtime>(app: &AppHandle<R>) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
         let _ = window.unminimize();

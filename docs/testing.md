@@ -45,6 +45,12 @@ trip.
 | `Clock` | `FakeClock` | `origin-domain/testing` |
 | `NotificationService` | `RecordingNotificationService` | `origin-platform/testing` |
 | `Opener` | `RecordingOpener` | `origin-platform/testing` |
+| `ConfirmationService` | `RecordingConfirmationService` | `origin-platform/testing` |
+| `TrayService` | `RecordingTrayService` | `origin-platform/testing` |
+| `WorkspaceFs` | `MemoryWorkspaceFs` | always available |
+| `WorkspaceWatcher` | `MemoryWorkspaceWatcher` | always available |
+| `ProcessRunner` | `MemoryProcessRunner` | always available |
+| `GlobalShortcutService` | `NoopGlobalShortcutService` | always available |
 | `SecretStore` | `MemorySecretStore` | always available |
 | `Storage` | `MemoryStorage` | always available |
 

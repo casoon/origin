@@ -12,5 +12,5 @@ mod platform;
 pub use bus::{Event, EventBus, EventStream, PublishError, RecvError, TryRecvError};
 pub use platform::{
     AccountExpired, AlertRaised, AlertResolved, JobFinished, JobProgress, JobStarted,
-    PlatformEvent, SyncCompleted, SyncFailed,
+    PlatformEvent, SyncCompleted, SyncFailed, TrayItemSelected,
 };

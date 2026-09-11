@@ -111,6 +111,19 @@ pub struct SecuritySection {
     /// Security profile per window label (ADR-0007).
     #[serde(default)]
     pub windows: BTreeMap<String, WindowSecurity>,
+    /// Permitted external processes (B1).
+    #[serde(default)]
+    pub process: ProcessSecurity,
+}
+
+/// Allowed programs for the process runner contract (B1).
+///
+/// Declared in `app.toml` under `[security.process]`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ProcessSecurity {
+    /// Programs permitted to run. Must be pure executable names without path separators.
+    #[serde(default)]
+    pub allowed_programs: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -190,6 +203,19 @@ impl Manifest {
                  a second tray icon"
                     .to_owned(),
             ));
+        }
+
+        for program in &self.security.process.allowed_programs {
+            if program.trim().is_empty() {
+                return Err(invalid(
+                    "security.process.allowed_programs contains an empty program name".to_owned(),
+                ));
+            }
+            if program.contains('/') || program.contains('\\') {
+                return Err(invalid(format!(
+                    "security.process.allowed_programs entry `{program}` must be a program name, not a path"
+                )));
+            }
         }
 
         Ok(())
@@ -319,6 +345,31 @@ version = "0.1.0"
         let manifest =
             manifest_with_override("\n[origin.overrides]\ncustom_window_management = true\n");
         assert!(manifest.has_override("custom_window_management"));
+    }
+
+    #[test]
+    fn process_allowlist_parses_allowed_programs() {
+        let manifest =
+            manifest("\n[security.process]\nallowed_programs = [\"git\", \"code\"]\n").unwrap();
+        assert_eq!(
+            manifest.security.process.allowed_programs,
+            vec!["git", "code"]
+        );
+    }
+
+    #[test]
+    fn process_allowlist_rejects_paths_or_empty_names() {
+        let err_path =
+            manifest("\n[security.process]\nallowed_programs = [\"/usr/bin/git\"]\n").unwrap_err();
+        assert!(
+            err_path
+                .to_string()
+                .contains("must be a program name, not a path")
+        );
+
+        let err_empty =
+            manifest("\n[security.process]\nallowed_programs = [\"   \"]\n").unwrap_err();
+        assert!(err_empty.to_string().contains("empty program name"));
     }
 
     fn manifest_with_override(extra: &str) -> Manifest {

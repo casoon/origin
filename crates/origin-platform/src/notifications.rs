@@ -12,6 +12,25 @@ pub enum Urgency {
     Critical,
 }
 
+/// One action offered on a notification (B6).
+///
+/// The action *is* the label plus a stable id: the host renders a button and reports
+/// the id back, so a product reacts to `"mark-read"` rather than to a translated label.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NotificationAction {
+    pub id: String,
+    pub label: String,
+}
+
+impl NotificationAction {
+    pub fn new(id: impl Into<String>, label: impl Into<String>) -> Self {
+        Self {
+            id: id.into(),
+            label: label.into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Notification {
     pub title: String,
@@ -20,6 +39,14 @@ pub struct Notification {
     /// Groups related notifications so a repeat replaces the previous one instead of
     /// stacking. Usually the alert fingerprint.
     pub tag: Option<String>,
+    /// Buttons on the notification itself (B6).
+    ///
+    /// Recording them is platform-independent; whether a host can *show* them is not
+    /// — macOS, for instance, needs the notification category registered up front. A
+    /// host that cannot render actions shows the notification without them rather than
+    /// failing.
+    #[serde(default)]
+    pub actions: Vec<NotificationAction>,
 }
 
 impl Notification {
@@ -29,6 +56,7 @@ impl Notification {
             body: None,
             urgency: Urgency::Normal,
             tag: None,
+            actions: Vec::new(),
         }
     }
 
@@ -44,6 +72,12 @@ impl Notification {
 
     pub fn with_tag(mut self, tag: impl Into<String>) -> Self {
         self.tag = Some(tag.into());
+        self
+    }
+
+    /// Attach an action button. The host reports `id` back when the user presses it.
+    pub fn with_action(mut self, action: NotificationAction) -> Self {
+        self.actions.push(action);
         self
     }
 }
@@ -66,5 +100,26 @@ impl NotificationService for NoopNotificationService {
     async fn notify(&self, notification: Notification) -> Result<()> {
         tracing::debug!(title = %notification.title, "notification dropped (noop service)");
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_notification_carries_actions_with_stable_ids() {
+        let notification = Notification::new("Pull request ready")
+            .with_action(NotificationAction::new("open", "Open"))
+            .with_action(NotificationAction::new("mark-read", "Mark as read"));
+
+        assert_eq!(notification.actions.len(), 2);
+        assert_eq!(notification.actions[0].id, "open");
+        assert_eq!(notification.actions[1].id, "mark-read");
+    }
+
+    #[test]
+    fn a_plain_notification_has_no_actions() {
+        assert!(Notification::new("Ping").actions.is_empty());
     }
 }

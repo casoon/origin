@@ -1,0 +1,24 @@
+[package]
+name = "origin-workspace-watch"
+description = "WorkspaceWatcher over the notify crate: event-driven local sync for working-tree changes."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+notify = { workspace = true }
+origin-domain = { workspace = true }
+origin-platform = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
+tracing = { workspace = true }
+
+[dev-dependencies]
+origin-platform = { workspace = true, features = ["testing"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time", "fs"] }
+
+[lints]
+workspace = true

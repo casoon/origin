@@ -71,10 +71,25 @@ impl AccountService {
         Ok(account)
     }
 
+    /// Register an account from a pasted token instead of an OAuth flow (B7/C1).
+    ///
+    /// The caller is expected to have verified the token against the service first —
+    /// this method only records it. Same credential-first ordering and rollback as
+    /// [`AccountService::connect`].
+    pub async fn connect_with_token(
+        &self,
+        connector: &ConnectorId,
+        display_name: impl Into<String>,
+        token: impl Into<String>,
+        scopes: Vec<String>,
+    ) -> Result<Account> {
+        let tokens = TokenSet::personal_access_token(token, scopes);
+        self.connect(connector, display_name, &tokens).await
+    }
+
     pub async fn list(&self) -> Result<Vec<Account>> {
         self.accounts.list().await
     }
-
     pub async fn list_for(&self, connector: &ConnectorId) -> Result<Vec<Account>> {
         self.accounts.list_for(connector).await
     }

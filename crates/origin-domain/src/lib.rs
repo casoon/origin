@@ -26,4 +26,4 @@ pub use ids::{AccountId, AlertId, ConnectorId, JobId, SyncId};
 pub use job::{Job, JobStatus, Progress};
 pub use metric::{Metric, MetricKey, Trend, Unit};
 pub use permission::{PlatformPermission, ProductPermission};
-pub use sync::{SyncOutcome, SyncState};
+pub use sync::{SyncOutcome, SyncState, ThrottleReason};

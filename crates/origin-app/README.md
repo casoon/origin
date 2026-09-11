@@ -41,5 +41,5 @@ without starting a desktop session.
 
 ## Stability
 
-Pre-1.0 (`0.1.0`). Public types, enums and field sets may still change between minor
+Pre-1.0 (`0.2.0`). Public types, enums and field sets may still change between minor
 versions; pin an exact version if that matters to you.

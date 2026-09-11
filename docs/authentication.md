@@ -32,6 +32,19 @@ let token = tokens.access_token(&account_id).await?;
 let request = HttpRequest::get(url).bearer(token.expose());
 ```
 
+### Static tokens and PATs
+
+For services that use static API keys or Personal Access Tokens (PATs) rather than OAuth web flows, `AccountService::connect_with_token` connects the account directly:
+
+```rust
+let account = platform
+    .accounts
+    .connect_with_token(&connector_id, "personal", "ghp_xxxxxxxxxxxx")
+    .await?;
+```
+
+The token is stored in the system credential store (never in plain storage) and surfaced as a non-refreshing `TokenSet`.
+
 ## What the flow guarantees
 
 - **PKCE (S256) always**, including for confidential clients. `plain` is not supported.

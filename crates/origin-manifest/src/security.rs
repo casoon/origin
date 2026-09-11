@@ -128,4 +128,42 @@ version = "0.1.0"
             "someone opening this file must see where it comes from"
         );
     }
+
+    #[test]
+    fn a_multi_window_product_gets_one_capability_per_profile() {
+        // B8: the window set a local-resource product needs — a main window, settings,
+        // a quick-capture overlay and a workspace window — each with its own profile.
+        let manifest = manifest(
+            "\n[security.windows.main]\nprofile = \"standard-dashboard\"\n\
+             \n[security.windows.settings]\nprofile = \"account-settings\"\n\
+             \n[security.windows.quick_capture]\nprofile = \"readonly-dashboard\"\n\
+             \n[security.windows.workspace]\nprofile = \"local-workspace\"\n",
+        );
+
+        let capabilities = Capability::from_manifest(&manifest);
+        let files: Vec<String> = capabilities.iter().map(Capability::file_name).collect();
+
+        assert_eq!(
+            files,
+            vec![
+                "account-settings.json",
+                "local-workspace.json",
+                "readonly-dashboard.json",
+                "standard-dashboard.json",
+            ]
+        );
+
+        let windows_of = |identifier: &str| {
+            capabilities
+                .iter()
+                .find(|capability| capability.identifier == identifier)
+                .map(|capability| capability.windows.clone())
+                .unwrap_or_default()
+        };
+
+        assert_eq!(windows_of("standard-dashboard"), vec!["main"]);
+        assert_eq!(windows_of("account-settings"), vec!["settings"]);
+        assert_eq!(windows_of("readonly-dashboard"), vec!["quick_capture"]);
+        assert_eq!(windows_of("local-workspace"), vec!["workspace"]);
+    }
 }

@@ -27,5 +27,5 @@ pub use backoff::Backoff;
 pub use engine::SyncEngine;
 pub use health::{SyncStatus, health_of};
 pub use policy::SyncPolicy;
-pub use source::{SyncContext, SyncReport, SyncResult, SyncSource};
+pub use source::{SyncContext, SyncReport, SyncResult, SyncSource, SyncThrottle};
 pub use target::SyncTarget;
