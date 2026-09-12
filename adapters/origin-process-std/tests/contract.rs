@@ -1,6 +1,8 @@
 //! The shared `ProcessRunner` contract, run against the real machine.
 
+#[cfg(unix)]
 use origin_platform::ProcessAllowlist;
+#[cfg(unix)]
 use origin_process_std::StdProcessRunner;
 
 /// The contract invokes the allowed program with `["--version"]`, which only has a

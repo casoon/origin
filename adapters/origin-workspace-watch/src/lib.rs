@@ -11,7 +11,7 @@ use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use origin_domain::{AppError, Result};
 use origin_platform::{WatchHandle, WorkspaceChange, WorkspaceRoot, WorkspaceWatcher};
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Mutex;
 use tokio::sync::broadcast;
 
@@ -46,12 +46,16 @@ impl WorkspaceWatcher for NotifyWorkspaceWatcher {
             }
         }
 
-        let root_path = root.as_path().to_path_buf();
+        // The platform may report paths through the resolved root rather than the one
+        // given (FSEvents: `/private/var/…` for `/var/…`), so relativise against both.
+        let given = root.as_path().to_path_buf();
+        let resolved = std::fs::canonicalize(&given).unwrap_or_else(|_| given.clone());
+        let roots = [given, resolved];
         let forward = sender.clone();
         let mut watcher = notify::recommended_watcher(move |event: notify::Result<Event>| {
             match event {
                 Ok(event) => {
-                    if let Some(change) = change_for(&event, &root_path) {
+                    if let Some(change) = change_for(&event, &roots) {
                         // `send` fails only when nobody is subscribed, which is fine.
                         let _ = forward.send(change);
                     }
@@ -83,9 +87,21 @@ impl WorkspaceWatcher for NotifyWorkspaceWatcher {
 }
 
 /// Translate a `notify` event into a workspace change, relative to the root.
-fn change_for(event: &Event, root: &Path) -> Option<WorkspaceChange> {
+///
+/// `roots` are the spellings of the same root the platform may report paths under.
+fn change_for(event: &Event, roots: &[PathBuf]) -> Option<WorkspaceChange> {
     let path = event.paths.first()?;
-    let relative = path.strip_prefix(root).unwrap_or(path);
+    let relative = roots
+        .iter()
+        .find_map(|root| path.strip_prefix(root).ok())
+        .unwrap_or(path);
+
+    // The root itself is not a change inside the workspace. FSEvents replays the
+    // root's own creation when the watch starts right after it was created.
+    if relative.as_os_str().is_empty() {
+        return None;
+    }
+
     // A POSIX-style relative path, so a change reads the same on every platform.
     let relative = relative.to_string_lossy().replace('\\', "/");
 
@@ -105,24 +121,46 @@ mod tests {
 
     #[test]
     fn only_write_kinds_map_to_a_change() {
-        let root = Path::new("/repo");
+        let root = [PathBuf::from("/repo")];
 
         let create = Event {
             kind: EventKind::Create(notify::event::CreateKind::File),
-            paths: vec![std::path::PathBuf::from("/repo/src/new.rs")],
+            paths: vec![PathBuf::from("/repo/src/new.rs")],
             attrs: Default::default(),
         };
         assert_eq!(
-            change_for(&create, root),
+            change_for(&create, &root),
             Some(WorkspaceChange::created("src/new.rs"))
         );
 
         let access = Event {
             kind: EventKind::Access(notify::event::AccessKind::Read),
-            paths: vec![std::path::PathBuf::from("/repo/src/main.rs")],
+            paths: vec![PathBuf::from("/repo/src/main.rs")],
             attrs: Default::default(),
         };
-        assert_eq!(change_for(&access, root), None);
+        assert_eq!(change_for(&access, &root), None);
+    }
+
+    #[test]
+    fn paths_under_the_resolved_root_are_relative_and_the_root_itself_is_ignored() {
+        let roots = [PathBuf::from("/var/ws"), PathBuf::from("/private/var/ws")];
+
+        let create = Event {
+            kind: EventKind::Create(notify::event::CreateKind::File),
+            paths: vec![PathBuf::from("/private/var/ws/new.txt")],
+            attrs: Default::default(),
+        };
+        assert_eq!(
+            change_for(&create, &roots),
+            Some(WorkspaceChange::created("new.txt"))
+        );
+
+        let root_created = Event {
+            kind: EventKind::Create(notify::event::CreateKind::Folder),
+            paths: vec![PathBuf::from("/private/var/ws")],
+            attrs: Default::default(),
+        };
+        assert_eq!(change_for(&root_created, &roots), None);
     }
 
     #[tokio::test]
