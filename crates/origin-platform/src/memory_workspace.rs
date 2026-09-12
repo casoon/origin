@@ -72,12 +72,11 @@ impl WorkspaceFs for MemoryWorkspaceFs {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::Path;
 
     #[tokio::test]
     async fn seeded_file_is_readable() {
         let fs = MemoryWorkspaceFs::new();
-        let root = WorkspaceRoot::new(Path::new("/").to_path_buf()).unwrap();
+        let root = WorkspaceRoot::new(std::env::temp_dir()).unwrap();
         let path = RelPath::new("README.md").unwrap();
 
         fs.seed_file(&root, &path, b"hello world".to_vec());
@@ -89,7 +88,7 @@ mod tests {
     #[tokio::test]
     async fn unseeded_file_returns_an_error() {
         let fs = MemoryWorkspaceFs::new();
-        let root = WorkspaceRoot::new(Path::new("/").to_path_buf()).unwrap();
+        let root = WorkspaceRoot::new(std::env::temp_dir()).unwrap();
 
         let result = fs.read_file(&root, &RelPath::new("nope").unwrap()).await;
 
@@ -99,7 +98,7 @@ mod tests {
     #[tokio::test]
     async fn seeded_dir_returns_entries() {
         let fs = MemoryWorkspaceFs::new();
-        let root = WorkspaceRoot::new(Path::new("/").to_path_buf()).unwrap();
+        let root = WorkspaceRoot::new(std::env::temp_dir()).unwrap();
         let dir = RelPath::new("src").unwrap();
 
         fs.seed_dir(
@@ -118,8 +117,8 @@ mod tests {
     #[tokio::test]
     async fn different_roots_are_isolated() {
         let fs = MemoryWorkspaceFs::new();
-        let root_a = WorkspaceRoot::new(Path::new("/a").to_path_buf()).unwrap();
-        let root_b = WorkspaceRoot::new(Path::new("/b").to_path_buf()).unwrap();
+        let root_a = WorkspaceRoot::new(std::env::temp_dir().join("a")).unwrap();
+        let root_b = WorkspaceRoot::new(std::env::temp_dir().join("b")).unwrap();
         let path = RelPath::new("shared.txt").unwrap();
 
         fs.seed_file(&root_a, &path, b"from A".to_vec());

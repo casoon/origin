@@ -123,7 +123,9 @@ mod tests {
 
     #[test]
     fn workspace_root_accepts_absolute_paths() {
-        WorkspaceRoot::new(PathBuf::from("/Users/test/repo")).expect("absolute path must be ok");
+        // `/Users/test/repo` would not be absolute on Windows (no drive); the temp dir
+        // is absolute everywhere.
+        WorkspaceRoot::new(std::env::temp_dir()).expect("absolute path must be ok");
     }
 
     #[test]

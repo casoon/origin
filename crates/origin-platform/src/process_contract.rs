@@ -14,7 +14,6 @@
 
 use crate::process::{ProcessAllowlist, ProcessRunner};
 use crate::workspace::WorkspaceRoot;
-use std::path::Path;
 
 /// Run every contract check against `runner`.
 ///
@@ -32,7 +31,7 @@ const NEVER_ALLOWED: &str = "__origin_contract_never_allowed__";
 
 async fn rejects_an_unlisted_program<R: ProcessRunner>(runner: &R) {
     let workspace_root =
-        WorkspaceRoot::new(Path::new("/").to_path_buf()).expect("absolute path is valid");
+        WorkspaceRoot::new(std::env::temp_dir()).expect("the temp dir is absolute");
 
     let result = runner
         .run(NEVER_ALLOWED, &[], workspace_root.as_path())
@@ -61,7 +60,7 @@ async fn runs_an_allowlisted_program<R: ProcessRunner>(runner: &R, allowlist: &P
         .expect("the allowlist must contain at least one program for the contract test");
 
     let workspace_root =
-        WorkspaceRoot::new(Path::new("/").to_path_buf()).expect("absolute path is valid");
+        WorkspaceRoot::new(std::env::temp_dir()).expect("the temp dir is absolute");
 
     let result = runner
         .run(allowed, &["--version".to_owned()], workspace_root.as_path())

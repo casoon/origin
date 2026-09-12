@@ -4,7 +4,6 @@ use origin_platform::{
     MemoryProcessRunner, MemoryWorkspaceFs, MemoryWorkspaceWatcher, ProcessAllowlist,
     ProcessOutput, RelPath, WorkspaceRoot,
 };
-use std::path::Path;
 
 // ── Process contract ─────────────────────────────────────────────────────
 
@@ -28,7 +27,7 @@ async fn memory_process_runner_satisfies_the_process_contract() {
 
 #[tokio::test]
 async fn memory_workspace_fs_satisfies_the_workspace_fs_contract() {
-    let root = WorkspaceRoot::new(Path::new("/tmp/origin-workspace-contract-test").to_path_buf())
+    let root = WorkspaceRoot::new(std::env::temp_dir().join("origin-workspace-contract-test"))
         .expect("absolute root");
     let fs = MemoryWorkspaceFs::new();
 
@@ -54,7 +53,7 @@ async fn memory_workspace_fs_satisfies_the_workspace_fs_contract() {
 
 #[tokio::test]
 async fn memory_workspace_watcher_satisfies_the_watcher_contract() {
-    let root = WorkspaceRoot::new(Path::new("/tmp/origin-watcher-contract-test").to_path_buf())
+    let root = WorkspaceRoot::new(std::env::temp_dir().join("origin-watcher-contract-test"))
         .expect("absolute root");
     let watcher = MemoryWorkspaceWatcher::new();
 

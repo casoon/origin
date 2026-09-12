@@ -52,12 +52,11 @@ impl WorkspaceWatcher for MemoryWorkspaceWatcher {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::Path;
 
     #[tokio::test]
     async fn watching_twice_returns_different_handles_same_channel() {
         let watcher = MemoryWorkspaceWatcher::new();
-        let root = WorkspaceRoot::new(Path::new("/repo").to_path_buf()).unwrap();
+        let root = WorkspaceRoot::new(std::env::temp_dir().join("repo")).unwrap();
 
         let mut handle_a = watcher.watch(&root).await.unwrap();
         let mut handle_b = watcher.watch(&root).await.unwrap();
@@ -71,8 +70,8 @@ mod tests {
     #[tokio::test]
     async fn different_roots_get_different_channels() {
         let watcher = MemoryWorkspaceWatcher::new();
-        let root_a = WorkspaceRoot::new(Path::new("/a").to_path_buf()).unwrap();
-        let root_b = WorkspaceRoot::new(Path::new("/b").to_path_buf()).unwrap();
+        let root_a = WorkspaceRoot::new(std::env::temp_dir().join("a")).unwrap();
+        let root_b = WorkspaceRoot::new(std::env::temp_dir().join("b")).unwrap();
 
         let mut handle_a = watcher.watch(&root_a).await.unwrap();
         let mut handle_b = watcher.watch(&root_b).await.unwrap();
@@ -95,7 +94,7 @@ mod tests {
     #[tokio::test]
     async fn emitting_to_an_unwatched_root_delivers_to_no_one() {
         let watcher = MemoryWorkspaceWatcher::new();
-        let root = WorkspaceRoot::new(Path::new("/unwatched").to_path_buf()).unwrap();
+        let root = WorkspaceRoot::new(std::env::temp_dir().join("unwatched")).unwrap();
 
         let delivered = watcher.emit(&root, WorkspaceChange::created("nope.txt"));
         assert_eq!(delivered, 0);
