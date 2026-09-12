@@ -11,7 +11,7 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use ts_rs::{Config, TS};
 
-/// Where the generated bindings live. Part of `@origin/client`, because that is the
+/// Where the generated bindings live. Part of `@casoon/origin-client`, because that is the
 /// only package allowed to know the transport (ADR-0010).
 const OUTPUT: &str = "frontend/client/src/generated.ts";
 

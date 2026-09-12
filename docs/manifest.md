@@ -56,7 +56,7 @@ Those commands own the platform bindings and capabilities. A product binding is 
 in its product crate and compared with the checked-in TypeScript during `cargo test`;
 the demo's `PulseSnapshot` is the reference pattern.
 
-Nothing in `@origin/client` hand-mirrors a Rust type any more: `types.ts` is a re-export
+Nothing in `@casoon/origin-client` hand-mirrors a Rust type any more: `types.ts` is a re-export
 list. Adding an event variant in Rust now breaks the frontend's exhaustive `switch` at
 check time instead of silently rendering nothing.
 

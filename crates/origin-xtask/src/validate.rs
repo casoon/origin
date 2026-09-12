@@ -124,7 +124,7 @@ fn check_no_product_names(root: &Path) -> Result<Vec<String>, String> {
     Ok(failures)
 }
 
-/// Rule 15: only `@origin/client` speaks Tauri IPC.
+/// Rule 15: only `@casoon/origin-client` speaks Tauri IPC.
 ///
 /// Scans the whole project, not a fixed list of directories: in a derivative the
 /// frontend lives wherever that product put it, and a rule that silently skips it is
@@ -143,7 +143,7 @@ fn check_invoke_is_confined(root: &Path) -> Result<Vec<String>, String> {
         let contents = read(&file)?;
         if contents.contains("@tauri-apps/api") {
             failures.push(format!(
-                "{} imports `@tauri-apps/api` — go through `@origin/client` instead \
+                "{} imports `@tauri-apps/api` — go through `@casoon/origin-client` instead \
                  (ADR-0010)",
                 relative(root, &file)
             ));

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Alert } from "@origin/client";
+  import type { Alert } from "@casoon/origin-client";
   import EmptyState from "./EmptyState.svelte";
 
   interface Props {

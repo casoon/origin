@@ -1,5 +1,5 @@
 /**
- * `@origin/client` — the frontend's view of the Rust core.
+ * `@casoon/origin-client` — the frontend's view of the Rust core.
  *
  * Views import from here. They never import `@tauri-apps/api` directly, so the
  * transport can change without touching a single component (ADR-0010).

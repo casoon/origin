@@ -14,10 +14,10 @@ importers:
 
   examples/demo:
     dependencies:
-      '@origin/client':
+      '@casoon/origin-client':
         specifier: workspace:*
         version: link:../../frontend/client
-      '@origin/ui':
+      '@casoon/origin-ui':
         specifier: workspace:*
         version: link:../../frontend/ui
     devDependencies:
@@ -70,7 +70,7 @@ importers:
 
   frontend/ui:
     dependencies:
-      '@origin/client':
+      '@casoon/origin-client':
         specifier: workspace:*
         version: link:../client
     devDependencies:

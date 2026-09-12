@@ -1,5 +1,5 @@
 /**
- * `@origin/ui` — the shared component layer.
+ * `@casoon/origin-ui` — the shared component layer.
  *
  * Products compose these and add their own components. They do not fork this package
  * (ADR-0013); a missing variant is a change here, not a copy there.

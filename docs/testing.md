@@ -66,4 +66,4 @@ and scheduling can be tested by advancing a `FakeClock` rather than by sleeping.
 
 `cargo xtask validate` enforces the mechanical part of `ARCHITECTURE.md`: layer
 dependencies, product names in platform code, `@tauri-apps/api` imports outside
-`@origin/client`, and blanket capability grants. It runs in CI as its own fast job.
+`@casoon/origin-client`, and blanket capability grants. It runs in CI as its own fast job.

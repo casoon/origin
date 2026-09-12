@@ -98,8 +98,8 @@ adapters/          concrete implementations of the contracts
   origin-workspace-watch     workspace filesystem watching
 
 host/origin-tauri  plugin wiring, tray, IPC commands, event bridge
-frontend/client    @origin/client — the only package that speaks Tauri IPC
-frontend/ui        @origin/ui — shared Svelte 5 components and design tokens
+frontend/client    @casoon/origin-client — the only package that speaks Tauri IPC
+frontend/ui        @casoon/origin-ui — shared Svelte 5 components and design tokens
 examples/demo      the reference application
 templates/app      the project template `cargo xtask new` instantiates,
                    with its own English documentation set

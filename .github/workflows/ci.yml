@@ -59,7 +59,7 @@ jobs:
 
       # The local scaffold points frontend deps at this checkout via `link:`. Those
       # packages resolve their own `workspace:*` dependencies (e.g.
-      # `@origin/ui` → `@origin/client`) from *this* pnpm install, not the scaffolded
+      # `@casoon/origin-ui` → `@casoon/origin-client`) from *this* pnpm install, not the scaffolded
       # project's — so it has to exist before the frontend link target is used.
       - run: pnpm install --frozen-lockfile
 

@@ -315,7 +315,7 @@ mod tests {
         let config = Config::default().with_large_int("number");
         let expected = format!(
             "// Generated from PulseSnapshot in src-tauri/src/pulse.rs. Do not edit.\n\n\
-             import type {{ Alert, Health, Metric }} from \"@origin/client\";\n\n\
+             import type {{ Alert, Health, Metric }} from \"@casoon/origin-client\";\n\n\
              export {}\n",
             PulseSnapshot::decl(&config)
         );

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Metric } from "@origin/client";
+  import type { Metric } from "@casoon/origin-client";
 
   interface Props {
     label: string;

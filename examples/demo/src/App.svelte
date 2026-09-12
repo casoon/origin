@@ -7,7 +7,7 @@
     HealthIndicator,
     MetricCard,
     Wordmark,
-  } from "@origin/ui";
+  } from "@casoon/origin-ui";
   import {
     accounts as accountsApi,
     appInfo,
@@ -24,7 +24,7 @@
     type PlatformEvent,
     type ProductPermission,
     type SyncStatus,
-  } from "@origin/client";
+  } from "@casoon/origin-client";
   import { pulse, type PulseSnapshot } from "./demo-client";
   import { onMount } from "svelte";
 

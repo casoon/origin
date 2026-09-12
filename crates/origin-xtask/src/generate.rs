@@ -14,7 +14,7 @@ const MARKER: &str = "Generated from app.toml";
 
 /// Write everything derived from the manifests found in the workspace.
 pub fn run(root: &Path) -> Result<(), String> {
-    // Contracts are generated only where `@origin/client` itself lives — that is the
+    // Contracts are generated only where `@casoon/origin-client` itself lives — that is the
     // Origin repository. A derivative consumes the package and gets the bindings with
     // it, rather than regenerating a copy that could differ.
     if let Some(contracts) = contracts_target(root) {
@@ -141,7 +141,7 @@ fn check_stale_capabilities(
     Ok(())
 }
 
-/// Where generated bindings belong, if this workspace holds `@origin/client`.
+/// Where generated bindings belong, if this workspace holds `@casoon/origin-client`.
 fn contracts_target(root: &Path) -> Option<PathBuf> {
     let path = contracts::output_path(root);
     path.parent().is_some_and(Path::is_dir).then_some(path)

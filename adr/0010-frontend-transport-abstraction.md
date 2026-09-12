@@ -10,10 +10,10 @@ into every component and makes command renames a runtime problem.
 
 ## Decision
 
-Only `@origin/client` knows the transport. Views import typed functions:
+Only `@casoon/origin-client` knows the transport. Views import typed functions:
 
 ```ts
-import { alerts } from "@origin/client";
+import { alerts } from "@casoon/origin-client";
 await alerts.acknowledge(id);
 ```
 

@@ -87,3 +87,24 @@ Crates already published stay published (crates.io has no unpublish for a used
 version). Fix the failure and re-run the same `--execute` command: step 1 above skips
 anything already published at the current version, so a partial run resumes on its own
 rather than needing the `crates` array trimmed by hand.
+
+# Publishing the frontend packages
+
+Scaffolded products also depend on `@casoon/origin-client` and `@casoon/origin-ui` by
+registry version (`^<version>` in the template's `ui/package.json`). They are published
+under the `@casoon` npm scope: `@origin` on npm belongs to an unrelated project.
+
+- Needs an npm account with publish rights for `@casoon` (`npm whoami`).
+- Use `pnpm publish`, never `npm publish`: only pnpm rewrites `@casoon/origin-ui`'s
+  `workspace:*` dependency on `@casoon/origin-client` to the real version.
+- Publish `@casoon/origin-client` first — `@casoon/origin-ui` depends on it.
+- Both packages share the workspace version; bump them together with the crates.
+
+```bash
+pnpm --filter @casoon/origin-client publish --dry-run   # inspect the tarball
+pnpm --filter @casoon/origin-client publish
+pnpm --filter @casoon/origin-ui publish
+```
+
+`publishConfig.access` is `public` in both manifests; a scoped package is otherwise
+published as restricted.

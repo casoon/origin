@@ -14,7 +14,7 @@ late — the same category as the storage namespace layout (ADR-0019).
 
 ## Decision
 
-The token names in `@origin/ui`'s `theme.css` are a stable contract, frozen at this
+The token names in `@casoon/origin-ui`'s `theme.css` are a stable contract, frozen at this
 set:
 
 ```text

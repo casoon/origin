@@ -17,7 +17,7 @@ They are enforced by review, by `cargo xtask validate`, and by CI.
 12. **Shared abstractions follow the Promotion Rule** (see ADR-0009).
 13. **Platform changes must build and test all reference applications.**
 14. **Security follows Least Privilege.** No blanket `fs:*` or `shell:*` capability.
-15. **Frontend views do not call unrestricted Tauri APIs directly.** They go through `@origin/client`.
+15. **Frontend views do not call unrestricted Tauri APIs directly.** They go through `@casoon/origin-client`.
 
 ## Layers
 

@@ -11,8 +11,8 @@
     "test:e2e": "vite build && playwright test"
   },
   "dependencies": {
-    "@origin/client": "__ORIGIN_NPM__",
-    "@origin/ui": "__ORIGIN_NPM__"
+    "@casoon/origin-client": "__ORIGIN_NPM__",
+    "@casoon/origin-ui": "__ORIGIN_NPM__"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

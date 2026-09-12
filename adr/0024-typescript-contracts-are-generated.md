@@ -6,7 +6,7 @@ Date:     2026-08-23
 ## Context
 
 Every type that crosses the IPC boundary existed twice: once in Rust and once,
-hand-written, in `@origin/client`. The mirror is correct on the day it is written and
+hand-written, in `@casoon/origin-client`. The mirror is correct on the day it is written and
 drifts from then on. The failure mode is the bad kind — no build error, just
 `undefined` at runtime, in production, on a field somebody renamed weeks ago.
 

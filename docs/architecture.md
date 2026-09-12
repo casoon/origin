@@ -68,11 +68,11 @@ subscribers — on purpose.
 
 ## The frontend boundary
 
-`@origin/client` is the only package that imports `@tauri-apps/api`. Everything else
+`@casoon/origin-client` is the only package that imports `@tauri-apps/api`. Everything else
 calls typed functions:
 
 ```ts
-import { settings } from "@origin/client";
+import { settings } from "@casoon/origin-client";
 await settings.set("demo.critical_above", 40);
 ```
 

@@ -13,8 +13,8 @@
     "test:e2e": "vite build && playwright test"
   },
   "dependencies": {
-    "@origin/client": "workspace:*",
-    "@origin/ui": "workspace:*"
+    "@casoon/origin-client": "workspace:*",
+    "@casoon/origin-ui": "workspace:*"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

@@ -248,20 +248,20 @@ fn rewrite_npm_dependencies(target: &Path, origin: &Path) -> Result<(), String> 
     let contents = std::fs::read_to_string(&manifest)
         .map_err(|error| format!("cannot read {}: {error}", manifest.display()))?;
 
-    let client_release = format!("\"@origin/client\": \"^{CURRENT}\"");
-    let ui_release = format!("\"@origin/ui\": \"^{CURRENT}\"");
+    let client_release = format!("\"@casoon/origin-client\": \"^{CURRENT}\"");
+    let ui_release = format!("\"@casoon/origin-ui\": \"^{CURRENT}\"");
     let rewritten = contents
         .replace(
             &client_release,
             &format!(
-                "\"@origin/client\": \"link:{}\"",
+                "\"@casoon/origin-client\": \"link:{}\"",
                 origin.join("frontend").join("client").display()
             ),
         )
         .replace(
             &ui_release,
             &format!(
-                "\"@origin/ui\": \"link:{}\"",
+                "\"@casoon/origin-ui\": \"link:{}\"",
                 origin.join("frontend").join("ui").display()
             ),
         );

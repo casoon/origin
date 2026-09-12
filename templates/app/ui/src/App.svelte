@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { AppShell, EmptyState, ErrorState } from "@origin/ui";
-  import { appInfo, OriginError, toOriginError, type AppInfo } from "@origin/client";
+  import { AppShell, EmptyState, ErrorState } from "@casoon/origin-ui";
+  import { appInfo, OriginError, toOriginError, type AppInfo } from "@casoon/origin-client";
   import { greeting } from "./client";
   import { onMount } from "svelte";
 

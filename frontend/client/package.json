@@ -1,11 +1,23 @@
 {
-  "name": "@origin/client",
+  "name": "@casoon/origin-client",
   "version": "0.2.0",
   "description": "Typed transport layer between an Origin frontend and the Rust core. The only package that knows Tauri IPC exists.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/casoon/origin.git",
+    "directory": "frontend/client"
+  },
+  "homepage": "https://github.com/casoon/origin#readme",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "check": "tsc --noEmit"

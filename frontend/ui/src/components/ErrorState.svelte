@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { OriginError } from "@origin/client";
+  import { OriginError } from "@casoon/origin-client";
 
   interface Props {
     error: OriginError;

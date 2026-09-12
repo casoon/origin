@@ -3,7 +3,7 @@ use origin_events::{PlatformEvent, RecvError};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 
-/// Event name the frontend listens on. Only `@origin/client` uses it (ADR-0010).
+/// Event name the frontend listens on. Only `@casoon/origin-client` uses it (ADR-0010).
 pub(crate) const PLATFORM_EVENT: &str = "origin://platform-event";
 
 /// Forward platform events from the in-process bus to the webview.

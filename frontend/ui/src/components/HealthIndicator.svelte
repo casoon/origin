@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Health } from "@origin/client";
+  import type { Health } from "@casoon/origin-client";
 
   interface Props {
     health: Health;

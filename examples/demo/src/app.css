@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@origin/ui/theme.css";
+@import "@casoon/origin-ui/theme.css";
 
 /*
  * The shared component package lives outside this app's directory, so Tailwind has to

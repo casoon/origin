@@ -5,7 +5,7 @@
  * string — let alone `invoke()` (ADR-0010).
  */
 
-import { command } from "@origin/client";
+import { command } from "@casoon/origin-client";
 
 export function greeting(): Promise<string> {
   return command<string>("example_greeting");

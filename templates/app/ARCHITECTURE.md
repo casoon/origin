@@ -40,7 +40,7 @@ logic has leaked into the host or the UI.
    documented otherwise.
 7. Credentials live in the OS keychain, never in the database.
 8. Security follows least privilege: no blanket `fs:*` or `shell:*` grant.
-9. Frontend views never call Tauri APIs directly — they go through `@origin/client`.
+9. Frontend views never call Tauri APIs directly — they go through `@casoon/origin-client`.
 10. A command resolves state, delegates and translates errors. No logic lives in one.
 
 ## File ownership
