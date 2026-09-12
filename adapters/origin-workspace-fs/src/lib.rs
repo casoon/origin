@@ -130,6 +130,8 @@ mod tests {
         std::fs::remove_dir_all(&root_path).ok();
     }
 
+    /// Unix only: creating a symlink needs privileges on Windows.
+    #[cfg(unix)]
     #[tokio::test]
     async fn a_symlink_escaping_the_root_is_refused() {
         let root_path = temp_root("symlink-root");
@@ -138,16 +140,7 @@ mod tests {
         std::fs::write(&secret, b"do not read").unwrap();
 
         // A file inside the root that is actually a symlink to the outside.
-        let link = root_path.join("escape.txt");
-        #[cfg(unix)]
-        std::os::unix::fs::symlink(&secret, &link).unwrap();
-        #[cfg(not(unix))]
-        {
-            // Symlink creation needs privileges on Windows; skip the assertion there.
-            std::fs::remove_dir_all(&root_path).ok();
-            std::fs::remove_dir_all(&outside).ok();
-            return;
-        }
+        std::os::unix::fs::symlink(&secret, root_path.join("escape.txt")).unwrap();
 
         let root = WorkspaceRoot::new(root_path.clone()).unwrap();
         let fs = StdWorkspaceFs::new();
