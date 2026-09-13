@@ -1,0 +1,108 @@
+---
+import {
+  Badge,
+  Badges,
+  BuildOutput,
+  CodeBlock,
+  Facts,
+  Features,
+  Hero,
+  Install,
+  Quickstart,
+  Terminal,
+} from '@casoon/pages-theme/components';
+import Base from '@casoon/pages-theme/layouts/Base.astro';
+import capability from '../../../examples/demo/src-tauri/capabilities/standard-dashboard.json?raw';
+import pulseTs from '../../../examples/demo/src/pulse.generated.ts?raw';
+
+const quickstart = `git clone https://github.com/casoon/origin
+cd origin
+pnpm install
+cargo xtask demo`;
+
+const inMemory = `let application = ApplicationBuilder::in_memory()
+    .clock(Arc::new(FakeClock::new(now)))
+    .notifications(Arc::new(RecordingNotificationService::new()))
+    .module(PulseModule)
+    .build()?;`;
+---
+
+<Base>
+  <Hero
+    title="Desktop apps that stop reinventing the platform."
+    lead="Origin is a reference architecture and starter system for modular desktop applications in Rust and Tauri: architecture rules, reusable platform crates, security conventions and build processes, plus a reference application that demonstrates all of it."
+  >
+    <Install
+      commands={[
+        { label: 'cargo', command: 'cargo add origin-app origin-tauri' },
+        { label: 'pnpm', command: 'pnpm add @casoon/origin-client @casoon/origin-ui' },
+        { label: 'git', command: 'git clone https://github.com/casoon/origin' },
+      ]}
+    />
+    <Badges>
+      <Badge>MIT</Badge>
+      <Badge>v0.2.0</Badge>
+      <Badge>Rust 1.88+</Badge>
+      <Badge>Tauri 2</Badge>
+    </Badges>
+    <Terminal
+      slot="output"
+      title="capabilities/standard-dashboard.json — generated from app.toml"
+      dots
+      ansi={capability}
+    />
+  </Hero>
+
+  <Facts
+    items={[
+      { value: '29', label: 'crates on crates.io, all at 0.2.0' },
+      { value: '15', label: 'binding rules in ARCHITECTURE.md' },
+      { value: '31', label: 'architecture decision records' },
+      { value: '4', label: 'named security profiles instead of permission lists' },
+    ]}
+  />
+
+  <Features
+    items={[
+      {
+        title: 'Domain code does not know Tauri exists',
+        body: 'Tauri is the desktop host. The application is a set of Rust components that depend on traits, not on an AppHandle, and the whole of it is testable without starting Tauri.',
+      },
+      {
+        title: 'Least privilege, checked by the build',
+        body: 'Each window gets a named security profile. Notifications and URL opening happen in Rust, so the frontend needs no permission for either, and cargo xtask validate fails on a blanket fs:* or shell:* grant.',
+      },
+      {
+        title: 'OAuth and sync that do not cut corners',
+        body: 'PKCE always, state verified before the code is used, a loopback redirect and single-flight refresh. The sync engine owns scheduling: retry, backoff with jitter, offline handling.',
+      },
+      {
+        title: 'Contracts generated, not mirrored',
+        body: 'Capability files come from app.toml and IPC types from their Rust definitions. A rename in Rust fails CI instead of surfacing as undefined in production.',
+      },
+      {
+        title: 'Bring your own AI client',
+        body: 'MCP makes the application controllable by the AI the user already has, with a permission level of its own that defaults to read and propose.',
+      },
+    ]}
+  />
+
+  <BuildOutput
+    caption="Derived from the Rust struct PulseSnapshot with ts-rs. The demo's test suite fails when this checked-in file drifts from the declaration."
+    file="examples/demo/src/pulse.generated.ts"
+  >
+    <Terminal ansi={pulseTs} />
+  </BuildOutput>
+
+  <Quickstart
+    lead="Run the reference application: a tray app with a background loop, cached read model, typed events, native notifications and a Svelte 5 frontend that never calls invoke directly."
+    steps={[
+      'Install Rust 1.88+, Node 22+, pnpm 10+ and the Tauri CLI.',
+      'Clone the repository and run <code>pnpm install</code>.',
+      'Start the demo with <code>cargo xtask demo</code>, then read its composition root.',
+    ]}
+  >
+    <CodeBlock code={quickstart} lang="shell" title="terminal" label="Shell" />
+    <CodeBlock code={inMemory} lang="rust" title="the same app, in a test" label="Rust" />
+  </Quickstart>
+</Base>
