@@ -1,9 +1,14 @@
+import { readFileSync } from 'node:fs';
 import { ansiToHtml } from '@casoon/pages-theme/ansi';
 import type { ShowcaseExample } from '@casoon/pages-theme/showcase';
 import appToml from '../../examples/demo/app.toml?raw';
 import capability from '../../examples/demo/src-tauri/capabilities/standard-dashboard.json?raw';
 import pulseRs from '../../examples/demo/src-tauri/src/pulse.rs?raw';
-import pulseTs from '../../examples/demo/src/pulse.generated.ts?raw';
+
+// Read, not imported with ?raw: Vite would transform the .ts file and resolve the demo's
+// tsconfig (extends @tsconfig/svelte), which is not installed in the Pages build.
+// Relative to site/, where the build runs. Also used by the start page.
+export const pulseTs = readFileSync('../examples/demo/src/pulse.generated.ts', 'utf8');
 
 // Both pairs are committed files of the reference application. CI keeps the generated
 // halves current: `cargo xtask generate --check` for the capability file, `cargo test`
