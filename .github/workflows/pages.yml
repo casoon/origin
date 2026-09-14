@@ -24,7 +24,7 @@ jobs:
       # generate --check`, `cargo test`), so no Rust build is needed here.
 
       # pnpm version: `packageManager` in the root package.json.
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v6.1.0
 
       - uses: actions/setup-node@v7
         with:
