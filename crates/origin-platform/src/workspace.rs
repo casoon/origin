@@ -37,8 +37,9 @@ impl WorkspaceRoot {
 
 /// A relative path within a [`WorkspaceRoot`].
 ///
-/// Construction rejects `.` and `..` components, so a resolved `root / rel`
-/// can never escape the root directory. The guard is checked at construction
+/// Construction rejects absolute paths and `..` components, so a resolved
+/// `root / rel` can never escape the root directory. `.` components are harmless
+/// and accepted. The guard is checked at construction
 /// time and again in the memory double, so a filesystem adapter can trust the
 /// type.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
