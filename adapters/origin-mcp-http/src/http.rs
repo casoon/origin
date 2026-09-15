@@ -44,27 +44,50 @@ impl HttpRequest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HttpResponse {
     pub status: u16,
+    /// Headers beyond the fixed `Content-Type`, `Content-Length` and `Connection`.
+    pub headers: Vec<(String, String)>,
     pub body: Vec<u8>,
 }
 
 impl HttpResponse {
     pub fn json(status: u16, value: &serde_json::Value) -> Self {
         let body = serde_json::to_vec(value).unwrap_or_else(|_| b"null".to_vec());
-        Self { status, body }
+        Self {
+            status,
+            headers: Vec::new(),
+            body,
+        }
     }
 
     pub fn text(status: u16, message: impl Into<String>) -> Self {
         Self {
             status,
+            headers: Vec::new(),
             body: message.into().into_bytes(),
         }
+    }
+
+    /// An empty `202 Accepted`: what MCP expects in reply to a notification.
+    pub fn accepted() -> Self {
+        Self {
+            status: 202,
+            headers: Vec::new(),
+            body: Vec::new(),
+        }
+    }
+
+    pub fn with_header(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
+        self.headers.push((name.into(), value.into()));
+        self
     }
 
     fn reason(&self) -> &'static str {
         match self.status {
             200 => "OK",
+            202 => "Accepted",
             400 => "Bad Request",
             401 => "Unauthorized",
+            403 => "Forbidden",
             404 => "Not Found",
             405 => "Method Not Allowed",
             413 => "Payload Too Large",
@@ -75,12 +98,19 @@ impl HttpResponse {
 
     /// Encode as an HTTP/1.1 response, always closing the connection.
     pub fn encode(&self) -> Vec<u8> {
-        let head = format!(
-            "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        let mut head = format!(
+            "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n",
             self.status,
             self.reason(),
             self.body.len()
         );
+        for (name, value) in &self.headers {
+            head.push_str(name);
+            head.push_str(": ");
+            head.push_str(value);
+            head.push_str("\r\n");
+        }
+        head.push_str("\r\n");
         let mut out = head.into_bytes();
         out.extend_from_slice(&self.body);
         out

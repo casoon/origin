@@ -6,7 +6,7 @@
 //! endpoint. Stdio then stays the transport a client speaks, but the process doing the
 //! work is the one that already owns the database.
 
-use crate::transport::post;
+use crate::transport::{Client, post};
 use origin_domain::{AppError, Result};
 use tokio::io::{AsyncBufReadExt, AsyncWrite, AsyncWriteExt, BufReader};
 
@@ -26,6 +26,9 @@ pub async fn is_alive(url: &str, token: Option<&str>) -> bool {
 
 /// Read JSON-RPC lines from `input`, forward each to `url`, and write the answers to
 /// `output`. Returns when the input ends.
+///
+/// The proxy keeps the session the endpoint assigns on `initialize`, so the client on
+/// the other side of stdio never has to know it is talking over HTTP.
 pub async fn proxy_streams<R, W>(
     input: BufReader<R>,
     mut output: W,
@@ -38,6 +41,7 @@ where
 {
     tracing::info!(url, "proxying stdio to a running instance over http");
 
+    let mut client = Client::new(url, token);
     let mut lines = input.lines();
     loop {
         let line = match lines.next_line().await {
@@ -52,7 +56,7 @@ where
             continue;
         }
 
-        let body = post(url, token, &line).await?;
+        let body = client.send(&line).await?;
         if body.trim().is_empty() {
             // A notification: no response is fed back.
             continue;

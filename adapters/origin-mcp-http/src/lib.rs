@@ -12,9 +12,11 @@
 //! ```
 //!
 //! The endpoint binds to `127.0.0.1:0` — the same pattern as the OAuth redirect
-//! (ADR-0015): the OS picks a free port, so two instances never collide. The port is
-//! published in a discovery file so a client can find it, and access is gated by a
-//! bearer token (G19).
+//! (ADR-0015): the OS picks a free port, so two instances never collide. URL and token
+//! are published in a discovery file only the current user can read, every request
+//! needs the bearer token (G19), and requests that name a foreign host or origin — a
+//! web page, a DNS-rebinding attack — are refused. `initialize` opens a session of its
+//! own, so several clients can attach at once.
 
 mod activity;
 mod discovery;
@@ -26,7 +28,7 @@ pub use activity::Activity;
 pub use discovery::Discovery;
 pub use http::{HttpRequest, HttpResponse, parse_request};
 pub use proxy::{is_alive, proxy_streams};
-pub use transport::{HttpTransport, handle, post};
+pub use transport::{Client, Endpoint, HttpTransport, SESSION_HEADER, post};
 
 /// The path an MCP client posts to. One well-known path keeps the discovery file
 /// trivial.
@@ -34,9 +36,8 @@ pub const MCP_PATH: &str = "/mcp";
 
 /// A bearer token guarding the endpoint (G19).
 ///
-/// A locally negotiated secret: the GUI shows a confirmation, then hands the token to
-/// the client. Compared in constant time so a local attacker cannot probe it byte by
-/// byte.
+/// A random secret per run, handed to clients through the owner-only discovery file.
+/// Compared in constant time so a local attacker cannot probe it byte by byte.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token(String);
 

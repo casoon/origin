@@ -140,9 +140,11 @@ locks and create split-brain database states.
 
 Origin provides `origin-mcp-http` (ADR-0031):
 - The running GUI binds an ephemeral HTTP loopback endpoint (`127.0.0.1:0`, path `/mcp`).
-- The port and product metadata are written to an application discovery file (`mcp-http.json`).
-- Access requires a 256-bit CSPRNG bearer token (`Authorization: Bearer <token>`), negotiated via
-  a user confirmation prompt in the GUI (G19).
+- URL and bearer token are written to a discovery file (`mcp-http.json`) only the current user
+  can read.
+- Every request needs the 256-bit bearer token (`Authorization: Bearer <token>`, G19); requests
+  with a foreign `Host` or `Origin` are refused, which keeps web pages and DNS rebinding out.
+- `initialize` opens a session (`Mcp-Session-Id` header), so several clients can attach at once.
 - If invoked via stdio while the GUI is running, the CLI transparently proxies standard I/O streams
   to the running GUI's loopback endpoint.
 
