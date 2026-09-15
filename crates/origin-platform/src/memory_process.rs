@@ -11,8 +11,9 @@ use std::sync::Mutex;
 
 /// Records process invocations and returns pre-configured outputs.
 ///
-/// Programs not in the allowlist are rejected with `AppError::Permission`
-/// before the `run` method returns — exactly as the contract requires.
+/// Invocations the allowlist refuses — an unlisted program, a denied argument, a
+/// working directory outside the roots — are rejected with `AppError::Permission`
+/// before the `run` method returns, exactly as the contract requires.
 #[derive(Debug)]
 pub struct MemoryProcessRunner {
     allowlist: ProcessAllowlist,
@@ -51,7 +52,7 @@ impl MemoryProcessRunner {
 #[async_trait]
 impl ProcessRunner for MemoryProcessRunner {
     async fn run(&self, program: &str, args: &[String], cwd: &Path) -> Result<ProcessOutput> {
-        self.allowlist.check(program)?;
+        self.allowlist.check_invocation(program, args, cwd)?;
 
         self.calls.lock().expect("recorder poisoned").push((
             program.to_owned(),

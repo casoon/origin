@@ -16,7 +16,7 @@ categories = ["os"]
 async-trait = { workspace = true }
 origin-domain = { workspace = true }
 origin-platform = { workspace = true }
-tokio = { workspace = true, features = ["process"] }
+tokio = { workspace = true, features = ["process", "io-util", "fs"] }
 tracing = { workspace = true }
 
 [dev-dependencies]
