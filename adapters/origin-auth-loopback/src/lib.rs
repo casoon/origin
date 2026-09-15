@@ -27,6 +27,12 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(300);
 /// not the browser we are waiting for.
 const MAX_REQUEST_BYTES: usize = 8 * 1024;
 
+/// How long one connection may take to send its request line.
+///
+/// Connections are served one at a time, so a socket that opens and then says nothing
+/// would otherwise hold up the browser's redirect until the whole flow times out.
+const CONNECTION_TIMEOUT: Duration = Duration::from_secs(10);
+
 #[derive(Debug)]
 pub struct LoopbackRedirect {
     listener: TcpListener,
@@ -77,12 +83,19 @@ impl LoopbackRedirect {
                 AppError::internal(format!("loopback redirect accept failed: {error}"))
             })?;
 
-            match self.handle(stream, expected_state).await {
-                // Browsers request `/favicon.ico` and sometimes pre-connect. Those are
-                // not the redirect, so keep waiting instead of failing the flow.
-                Ok(None) => continue,
-                Ok(Some(code)) => return Ok(code),
-                Err(error) => return Err(error),
+            match tokio::time::timeout(CONNECTION_TIMEOUT, self.handle(stream, expected_state))
+                .await
+            {
+                // Browsers request `/favicon.ico` and sometimes pre-connect, and any
+                // local process can knock on this port. None of that is the redirect,
+                // so keep waiting instead of failing the flow.
+                Ok(Ok(None)) => continue,
+                Err(_) => {
+                    tracing::debug!("loopback redirect connection timed out");
+                    continue;
+                }
+                Ok(Ok(Some(code))) => return Ok(code),
+                Ok(Err(error)) => return Err(error),
             }
         }
     }
@@ -93,7 +106,14 @@ impl LoopbackRedirect {
         mut stream: TcpStream,
         expected_state: &str,
     ) -> Result<Option<AuthorizationCode>> {
-        let request_line = read_request_line(&mut stream).await?;
+        let request_line = match read_request_line(&mut stream).await {
+            Ok(line) => line,
+            // An unreadable or oversized request is not the browser's redirect.
+            Err(error) => {
+                tracing::debug!(%error, "loopback redirect request ignored");
+                return Ok(None);
+            }
+        };
         let Some(target) = request_line.split_whitespace().nth(1) else {
             respond(&mut stream, 400, "Bad request").await;
             return Ok(None);
@@ -114,21 +134,20 @@ impl LoopbackRedirect {
         };
 
         // The state check is what makes this listener safe: anything on localhost can
-        // hit this port, but only the flow we started knows the state.
+        // hit this port, but only the flow we started knows the state. A request
+        // without it is ignored rather than fatal — otherwise any local process could
+        // abort the user's sign-in with a single request.
         match get("state") {
             Some(state) if state == expected_state => {}
             _ => {
+                tracing::warn!("loopback redirect without the expected state ignored");
                 respond(
                     &mut stream,
                     400,
                     "Unexpected request. You can close this window.",
                 )
                 .await;
-                return Err(AppError::Authentication(
-                    "redirect did not carry the expected state — the flow was not started \
-                     by this application"
-                        .to_owned(),
-                ));
+                return Ok(None);
             }
         }
 

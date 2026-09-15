@@ -107,18 +107,24 @@ async fn a_denied_authorization_is_reported_with_its_description() {
 }
 
 #[tokio::test]
-async fn a_redirect_with_the_wrong_state_is_rejected() {
+async fn a_redirect_with_the_wrong_state_is_ignored() {
     let listener = test_listener().await;
     let uri = listener.redirect_uri();
 
-    let client =
-        tokio::spawn(async move { request(&uri, "/callback?code=stolen&state=attacker").await });
+    let client = tokio::spawn(async move {
+        // Any local process can hit the port. It must neither get its code accepted
+        // nor end the user's sign-in.
+        let forged = request(&uri, "/callback?code=stolen&state=attacker").await;
+        assert!(forged.starts_with("HTTP/1.1 400"), "got: {forged}");
 
-    let error = listener.wait("our-state").await.unwrap_err();
+        request(&uri, "/callback?code=code-abc&state=our-state").await
+    });
+
+    assert_eq!(
+        listener.wait("our-state").await.unwrap().as_str(),
+        "code-abc"
+    );
     client.await.unwrap();
-
-    assert_eq!(error.kind(), ErrorKind::Authentication);
-    assert!(error.to_string().contains("expected state"), "got: {error}");
 }
 
 #[tokio::test]
@@ -127,18 +133,22 @@ async fn an_error_redirect_must_pass_the_state_check_too() {
     let uri = listener.redirect_uri();
 
     let client = tokio::spawn(async move {
-        request(
+        let forged = request(
             &uri,
             "/callback?error=access_denied&error_description=attacker-controlled&state=attacker",
         )
-        .await
+        .await;
+        assert!(forged.starts_with("HTTP/1.1 400"), "got: {forged}");
+
+        request(&uri, "/callback?code=code-abc&state=our-state").await
     });
 
-    let error = listener.wait("our-state").await.unwrap_err();
+    // A forged denial does not end the flow; the real redirect still gets through.
+    assert_eq!(
+        listener.wait("our-state").await.unwrap().as_str(),
+        "code-abc"
+    );
     client.await.unwrap();
-
-    assert!(error.to_string().contains("expected state"), "got: {error}");
-    assert!(!error.to_string().contains("attacker-controlled"));
 }
 
 #[tokio::test]
