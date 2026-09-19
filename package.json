@@ -1,6 +1,6 @@
 {
   "name": "origin",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Reference architecture and starter system for modular Rust + Tauri desktop applications",
   "license": "MIT",
