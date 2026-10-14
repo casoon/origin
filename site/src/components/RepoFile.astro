@@ -1,0 +1,24 @@
+---
+import { readFileSync } from 'node:fs';
+import { CodeBlock } from '@casoon/pages-theme/components';
+
+interface Props {
+  /** Path relative to the repository root, e.g. `examples/demo/app.toml`. */
+  path: string;
+  lang?: string;
+  /** Show only this Rust struct (with its derive line) instead of the whole file. */
+  struct?: string;
+}
+
+// Read at build time from the committed file, so the docs cannot drift from the code.
+// The build runs in site/, one level below the repository root.
+const { path, lang = 'text', struct } = Astro.props;
+let code = readFileSync(`../${path}`, 'utf8').trimEnd();
+if (struct) {
+  const excerpt = code.match(new RegExp(`#\\[derive\\([^\\n]*\\)\\]\\npub struct ${struct} \\{[\\s\\S]*?\\n\\}`))?.[0];
+  if (!excerpt) throw new Error(`struct ${struct} not found in ${path}`);
+  code = excerpt;
+}
+---
+
+<CodeBlock code={code} lang={lang} title={path} />
