@@ -60,6 +60,27 @@ Those commands own the platform bindings and capabilities. A product binding is 
 in its product crate and compared with the checked-in TypeScript during `cargo test`;
 the demo's `PulseSnapshot` is the reference pattern.
 
+### Both, in the demo
+
+The demo's `app.toml` above gives the main window the `standard-dashboard` profile.
+`cargo xtask generate` turns that into this capability file — explicit permissions, no
+filesystem, shell or process access:
+
+<RepoFile path="examples/demo/src-tauri/capabilities/standard-dashboard.json" lang="json" />
+
+`PulseSnapshot` is what the demo's UI renders. The Rust struct derives `ts_rs::TS`:
+
+<RepoFile path="examples/demo/src-tauri/src/pulse.rs" struct="PulseSnapshot" lang="rust" />
+
+and the checked-in TypeScript binding next to the frontend is derived from it. A test in
+the demo fails when the file drifts from the declaration, so a rename in Rust fails CI
+instead of surfacing as `undefined` in front of a user:
+
+<RepoFile path="examples/demo/src/pulse.generated.ts" lang="ts" />
+
+All three are read from the repository at build time; the
+[Showcase](../../../showcase/) shows the same two pairs side by side.
+
 Nothing in `@casoon/origin-client` hand-mirrors a Rust type any more: `types.ts` is a re-export
 list. Adding an event variant in Rust now breaks the frontend's exhaustive `switch` at
 check time instead of silently rendering nothing.

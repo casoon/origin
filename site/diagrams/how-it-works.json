@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "type": "flow",
+  "title": "How an Origin application is put together",
+  "description": "The Svelte views talk to the Tauri host only through the typed client @casoon/origin-client. The host, an MCP adapter for AI clients and headless tests all drive the same application: your modules, assembled in one composition root. The application uses the Origin platform crates, which depend only on the platform contracts. Adapters implement those contracts with SQLite, the OS credential store, reqwest and native notifications.",
+  "source": "ARCHITECTURE.md (Layers), crates/, adapters/, host/origin-tauri, frontend/client, as of 2026-10-14",
+  "width": 1340,
+  "height": 300,
+  "flow": {
+    "nodes": [
+      { "id": "views", "label": "Svelte views", "sublabel": "@casoon/origin-client", "kind": "start" },
+      { "id": "ai", "label": "AI client", "sublabel": "the user's own", "kind": "external" },
+      { "id": "tests", "label": "Tests", "sublabel": "in_memory(), no Tauri", "kind": "start" },
+      { "id": "host", "label": "Tauri host", "sublabel": "origin-tauri" },
+      { "id": "mcp", "label": "MCP adapter", "sublabel": "stdio or loopback HTTP" },
+      { "id": "app", "label": "Your application", "sublabel": "composition root, modules" },
+      { "id": "platform", "label": "Origin platform", "sublabel": "auth, sync, jobs, storage" },
+      { "id": "contracts", "label": "Platform contracts", "sublabel": "traits, no Tauri" },
+      { "id": "adapters", "label": "Adapters", "sublabel": "SQLite, keychain, HTTP", "kind": "store" }
+    ],
+    "edges": [
+      { "from": "views", "to": "host", "label": "typed IPC" },
+      { "from": "ai", "to": "mcp" },
+      { "from": "host", "to": "app" },
+      { "from": "mcp", "to": "app" },
+      { "from": "tests", "to": "app" },
+      { "from": "app", "to": "platform" },
+      { "from": "platform", "to": "contracts" },
+      { "from": "contracts", "to": "adapters", "label": "implemented by" }
+    ],
+    "mainPath": ["views", "host", "app", "platform", "contracts", "adapters"],
+    "orientation": "landscape"
+  }
+}

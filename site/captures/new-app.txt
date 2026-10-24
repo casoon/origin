@@ -1,0 +1,9 @@
+generated files for app.toml
+created ../my-app
+
+next:
+  cd ../my-app
+  pnpm install
+  cargo tauri dev
+
+Replace the placeholder icons in src-tauri/icons before shipping.

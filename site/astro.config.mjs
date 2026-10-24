@@ -11,8 +11,10 @@ export default defineConfig({
       name: 'origin',
       description:
         'A reference architecture and starter system for modular desktop applications built with Rust and Tauri.',
+      tagline: 'Modular Rust and Tauri desktop apps',
+      website: 'https://origin.casoon.de',
       repo: 'casoon/origin',
-      version: '0.2.0',
+      version: '0.2.1',
       license: 'MIT',
       packages: [
         { label: 'crates.io', href: 'https://crates.io/crates/origin-app' },
@@ -26,8 +28,9 @@ export default defineConfig({
         lifecycle: 'Project lifecycle',
         reference: 'Reference',
       },
-      // No CHANGELOG.md yet; v0.2.0 is the only tag.
+      // No CHANGELOG.md yet.
       changelog: false,
+      mdxComponents: './src/mdx-components.ts',
     }),
   ],
 });

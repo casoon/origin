@@ -1,0 +1,13 @@
+# Plays the captured output in new-app.txt (see capture.sh).
+version: 1
+terminal:
+  title: origin
+  cols: 64
+  rows: 13
+  theme: catppuccin-mocha
+steps:
+  - run: cargo xtask new my-app --into ..
+  - wait: 900
+  - show: new-app.txt
+    lang: text
+  - wait: 5000
