@@ -11,6 +11,8 @@ export default defineConfig({
       name: 'origin',
       description:
         'A reference architecture and starter system for modular desktop applications built with Rust and Tauri.',
+      tagline: 'Modular Rust and Tauri desktop apps',
+      website: 'https://origin.casoon.de',
       repo: 'casoon/origin',
       version: '0.2.1',
       license: 'MIT',
