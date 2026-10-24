@@ -11,6 +11,7 @@ import {
   Quickstart,
 } from '@casoon/pages-theme/components';
 import Base from '@casoon/pages-theme/layouts/Base.astro';
+import config from 'virtual:casoon-pages/config';
 import { url } from '@casoon/pages-theme/url';
 // Animated SVG built with castwright from site/captures/new-app.terminal.yaml.
 import newAppSvg from '../../captures/new-app.svg?url';
@@ -36,7 +37,7 @@ cargo xtask demo`;
     />
     <Badges>
       <Badge>MIT</Badge>
-      <Badge>v0.2.1</Badge>
+      <Badge>v{config.version}</Badge>
       <Badge>Rust 1.88+</Badge>
       <Badge>Tauri 2</Badge>
     </Badges>
