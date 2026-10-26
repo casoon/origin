@@ -512,18 +512,25 @@ impl SyncEngine {
 
     /// A value in `0.0..1.0` for jitter.
     fn next_random(&self) -> f64 {
-        let previous = self
-            .seed
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |seed| {
-                Some(
-                    seed.wrapping_mul(6_364_136_223_846_793_005)
-                        .wrapping_add(1_442_695_040_888_963_407),
-                )
-            });
+        // A plain compare-exchange loop: `fetch_update` is deprecated on current
+        // stable in favour of `try_update`, which the MSRV (1.88) does not have.
+        let mut previous = self.seed.load(Ordering::Relaxed);
+        loop {
+            let next = previous
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            match self.seed.compare_exchange_weak(
+                previous,
+                next,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            ) {
+                Ok(_) => break,
+                Err(current) => previous = current,
+            }
+        }
 
-        let value = previous
-            .unwrap_or(0)
-            .wrapping_mul(6_364_136_223_846_793_005);
+        let value = previous.wrapping_mul(6_364_136_223_846_793_005);
         f64::from((value >> 40) as u32) / f64::from(1u32 << 24)
     }
 }
