@@ -17,6 +17,7 @@ jobs:
   architecture:
     name: Architecture rules
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
@@ -35,6 +36,7 @@ jobs:
   template:
     name: Template builds
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -95,6 +97,7 @@ jobs:
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
@@ -118,6 +121,7 @@ jobs:
   rust:
     name: Rust (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -169,6 +173,7 @@ jobs:
   msrv:
     name: MSRV (1.88)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # rust-toolchain.toml pins `stable` and overrides the toolchain installed below;
     # RUSTUP_TOOLCHAIN takes precedence over it, so this job really builds with 1.88.
     env:
@@ -176,10 +181,14 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
+      # origin-tauri and origin-notifications-tauri are published, so they need the
+      # webkit/gtk headers here too. Without recommends the install pulls a fraction
+      # of the packages (no gstreamer plugins, portals …), which is what made this
+      # step take up to 25 minutes on a slow mirror.
       - name: Install Tauri system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
+          sudo apt-get install -y --no-install-recommends \
             libwebkit2gtk-4.1-dev \
             libgtk-3-dev \
             libayatana-appindicator3-dev \
@@ -190,17 +199,11 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: rustc --version
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @origin/demo build
-
+      # The MSRV promise covers the published crates. The demo app is not published
+      # and is the only crate whose build needs the frontend (`generate_context!`),
+      # so leaving it out also drops the Node/pnpm setup from this job.
       - name: Test
-        run: cargo test --workspace
+        run: cargo test --workspace --exclude origin-demo
 
   # G15: the secret-store contract runs against a *real* secret service here, not
   # only against the in-memory double. On Linux a throwaway gnome-keyring inside a
@@ -208,6 +211,7 @@ jobs:
   keychain:
     name: Secret store contract (real backend)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -229,6 +233,7 @@ jobs:
   security:
     name: Dependency security
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
