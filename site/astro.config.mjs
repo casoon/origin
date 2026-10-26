@@ -27,8 +27,6 @@ export default defineConfig({
         lifecycle: 'Project lifecycle',
         reference: 'Reference',
       },
-      // No CHANGELOG.md yet.
-      changelog: false,
       mdxComponents: './src/mdx-components.ts',
     }),
   ],
