@@ -4,7 +4,7 @@
 #   site/captures/capture.sh
 # It creates ../my-app next to the repository and removes it again. Rebuild the SVG
 # after a capture:
-#   cd site/captures && npx -y -p @casoon/castwright@0.4.0 -p shiki castwright build new-app.terminal.yaml --format svg -o .
+#   cd site/captures && npx -y -p @casoon/castwright@0.5.0 -p shiki castwright build new-app.terminal.yaml --format svg -o .
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
