@@ -19,6 +19,8 @@ together.
 
 ### Changed
 
+- **Site:** the footer follows the page language instead of always showing German text, and the
+  start page now carries a release teaser and an FAQ (theme 0.11.1).
 - **MCP:** `initialize` opens a session of its own (`Mcp-Session-Id`, Streamable HTTP), so
   several clients can attach to one GUI run and a reconnect works; the stdio proxy carries the
   session through. Details:

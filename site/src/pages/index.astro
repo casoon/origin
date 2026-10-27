@@ -1,17 +1,21 @@
 ---
+import { readFile } from 'node:fs/promises';
 import {
   Badge,
   Badges,
   Button,
   CodeBlock,
   Facts,
+  Faq,
   Features,
   Hero,
   Install,
   Quickstart,
+  ReleaseHighlights,
 } from '@casoon/pages-theme/components';
 import Base from '@casoon/pages-theme/layouts/Base.astro';
 import config from 'virtual:casoon-pages/config';
+import { parseChangelog } from '@casoon/pages-theme/lib/changelog';
 import { url } from '@casoon/pages-theme/url';
 // Animated SVG built with castwright from site/captures/new-app.terminal.yaml.
 import newAppSvg from '../../captures/new-app.svg?url';
@@ -21,6 +25,13 @@ const quickstart = `git clone https://github.com/casoon/origin
 cd origin
 pnpm install
 cargo xtask demo`;
+
+// Skip "Unreleased": it has no version to show as "New in v…" yet.
+const latestRelease = config.changelog
+  ? parseChangelog(await readFile(config.changelog, 'utf8')).find(
+      (r) => r.version.toLowerCase() !== 'unreleased'
+    )
+  : undefined;
 ---
 
 <Base>
@@ -132,6 +143,29 @@ cargo xtask demo`;
   >
     <CodeBlock code={quickstart} lang="shell" title="terminal" label="Shell" />
   </Quickstart>
+
+  {latestRelease && <ReleaseHighlights release={latestRelease} />}
+
+  <Faq
+    items={[
+      {
+        q: 'Is Origin a framework that replaces Tauri?',
+        a: 'No. Tauri stays the desktop host; Origin is a set of architecture rules, reusable platform crates and security conventions on top of it, plus a reference application that shows how they fit together.',
+      },
+      {
+        q: 'Can I test my application without starting the desktop app?',
+        a: 'Yes — domain code never depends on an AppHandle, only on traits. ApplicationBuilder::in_memory() lets the whole application run in a unit test with a fake clock and a recording notification service.',
+      },
+      {
+        q: 'How can an AI client interact with an app built on Origin?',
+        a: 'Through MCP, over stdio or authenticated loopback HTTP, with a permission level of its own that defaults to read/propose only. Commit and delete calls need both an explicit grant and a human confirmation.',
+      },
+      {
+        q: 'Is Origin ready for production use?',
+        a: "It is pre-1.0, so a minor release may still change the public API. The architecture contract, platform contracts, OAuth, sync engine and reference application are implemented; the signed release pipeline exists but hasn't been exercised end to end for a real product yet.",
+      },
+    ]}
+  />
 </Base>
 
 <style>
