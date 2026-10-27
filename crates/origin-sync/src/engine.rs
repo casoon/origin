@@ -8,12 +8,13 @@ use origin_domain::{
 use origin_events::{EventBus, PlatformEvent, SyncCompleted, SyncFailed};
 use origin_storage::Storage;
 use std::collections::BTreeMap;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 use std::sync::RwLock;
-use std::sync::atomic::{AtomicU64, Ordering};
 use time::{Duration, OffsetDateTime};
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
+use tracing::Instrument;
 
 /// How often the background loop looks for due targets.
 ///
@@ -37,8 +38,9 @@ pub struct SyncEngine {
     state: SyncStateStore,
     clock: Arc<dyn Clock>,
     events: EventBus,
-    /// Seed for jitter. Deterministic on purpose: with a fake clock, tests reproduce.
-    seed: Arc<AtomicU64>,
+    /// Seed for jitter, fixed per engine so installations that fail at the same moment
+    /// still spread out. Derived from the clock, so tests with a fake clock reproduce.
+    seed: u64,
 }
 
 impl SyncEngine {
@@ -50,7 +52,7 @@ impl SyncEngine {
             state: SyncStateStore::new(storage, clock.clone()),
             clock,
             events,
-            seed: Arc::new(AtomicU64::new(seed)),
+            seed,
         }
     }
 
@@ -118,10 +120,15 @@ impl SyncEngine {
             .ok_or_else(|| AppError::validation(format!("unknown sync target {target}")))?;
 
         let state = self.state.load(target).await?;
-        Ok(self.due_at_for(&state, &policy))
+        Ok(self.due_at_for(target, &state, &policy))
     }
 
-    fn due_at_for(&self, state: &SyncState, policy: &SyncPolicy) -> OffsetDateTime {
+    fn due_at_for(
+        &self,
+        target: &SyncTarget,
+        state: &SyncState,
+        policy: &SyncPolicy,
+    ) -> OffsetDateTime {
         let Some(last_attempt) = state.last_attempt else {
             // Never ran: due immediately.
             return OffsetDateTime::UNIX_EPOCH;
@@ -136,7 +143,9 @@ impl SyncEngine {
                     ..
                 }),
             ) => policy.offline_retry,
-            (failures, _) => policy.backoff.delay_for(failures, self.next_random()),
+            (failures, _) => policy
+                .backoff
+                .delay_for(failures, self.jitter(target, state)),
         };
 
         // No `min_interval` floor here: that is a throttle for *triggered* syncs
@@ -174,7 +183,7 @@ impl SyncEngine {
                 }
             };
 
-            if now < self.due_at_for(&state, &policy) {
+            if now < self.due_at_for(&target, &state, &policy) {
                 continue;
             }
 
@@ -234,7 +243,7 @@ impl SyncEngine {
             Err(error) => return Some(Err(error)),
         };
 
-        if now < self.due_at_for(&state, &policy) {
+        if now < self.due_at_for(target, &state, &policy) {
             tracing::debug!(%target, "sync skipped: no longer due once the lock was free");
             return None;
         }
@@ -320,8 +329,25 @@ impl SyncEngine {
             account_id = target.account.as_str(),
             target = target.name.as_str(),
         );
-        let _entered = span.enter();
+        self.run_sync(target, policy, source, context, sync_id, state)
+            .instrument(span)
+            .await
+    }
 
+    /// The run itself, inside the `sync` span.
+    ///
+    /// Instrumented rather than entered: a span entered and held across `.await` stays
+    /// current on the worker thread while this run is suspended, and tags the log lines
+    /// of whatever other sync runs there meanwhile.
+    async fn run_sync(
+        &self,
+        target: &SyncTarget,
+        policy: SyncPolicy,
+        source: Arc<dyn SyncSource>,
+        context: SyncContext,
+        sync_id: SyncId,
+        state: SyncState,
+    ) -> Result<SyncOutcome> {
         let result = source.sync(&context).await;
         let now = self.clock.now();
         let mut state = state;
@@ -379,7 +405,7 @@ impl SyncEngine {
 
                 self.state.save(target, &state).await?;
 
-                let retry_at = Some(self.due_at_for(&state, &policy));
+                let retry_at = Some(self.due_at_for(target, &state, &policy));
                 tracing::warn!(kind = ?error.kind(), %error, ?retry_at, "sync failed");
 
                 let _ = self.events.publish(PlatformEvent::SyncFailed(SyncFailed {
@@ -510,28 +536,23 @@ impl SyncEngine {
             }));
     }
 
-    /// A value in `0.0..1.0` for jitter.
-    fn next_random(&self) -> f64 {
-        // A plain compare-exchange loop: `fetch_update` is deprecated on current
-        // stable in favour of `try_update`, which the MSRV (1.88) does not have.
-        let mut previous = self.seed.load(Ordering::Relaxed);
-        loop {
-            let next = previous
-                .wrapping_mul(6_364_136_223_846_793_005)
-                .wrapping_add(1_442_695_040_888_963_407);
-            match self.seed.compare_exchange_weak(
-                previous,
-                next,
-                Ordering::Relaxed,
-                Ordering::Relaxed,
-            ) {
-                Ok(_) => break,
-                Err(current) => previous = current,
-            }
-        }
+    /// A value in `0.0..1.0` for jitter, fixed for one failure of one target.
+    ///
+    /// Derived from the target and its last attempt rather than drawn from a running
+    /// generator: the scheduler asks for the due time on every tick, and a value
+    /// re-rolled each time lets the earliest roll win — pulling every retry toward the
+    /// lower bound of the jitter window.
+    fn jitter(&self, target: &SyncTarget, state: &SyncState) -> f64 {
+        let mut hasher = DefaultHasher::new();
+        self.seed.hash(&mut hasher);
+        target.hash(&mut hasher);
+        state
+            .last_attempt
+            .map(OffsetDateTime::unix_timestamp_nanos)
+            .hash(&mut hasher);
+        state.failure_streak.hash(&mut hasher);
 
-        let value = previous.wrapping_mul(6_364_136_223_846_793_005);
-        f64::from((value >> 40) as u32) / f64::from(1u32 << 24)
+        f64::from((hasher.finish() >> 40) as u32) / f64::from(1u32 << 24)
     }
 }
 

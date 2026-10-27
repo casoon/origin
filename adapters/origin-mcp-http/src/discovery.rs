@@ -31,7 +31,7 @@ impl Discovery {
             .map_err(|error| AppError::storage(format!("cannot encode discovery: {error}")))?;
 
         let temporary = path.with_extension("json.tmp");
-        std::fs::write(&temporary, encoded).map_err(|error| {
+        write_private(&temporary, encoded.as_bytes()).map_err(|error| {
             AppError::storage(format!("cannot write {}: {error}", temporary.display()))
         })?;
         std::fs::rename(&temporary, path).map_err(|error| {
@@ -55,6 +55,31 @@ impl Discovery {
     pub fn remove(path: &Path) {
         let _ = std::fs::remove_file(path);
     }
+}
+
+/// Write a file only the current user can read: it carries the bearer token, and the
+/// data directory is not guaranteed to be private (on Linux it usually is not).
+#[cfg(unix)]
+fn write_private(path: &Path, contents: &[u8]) -> std::io::Result<()> {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+
+    // `mode` only applies when the file is created, and a temp file left behind by a
+    // crash may carry wider permissions — so always start from a fresh file.
+    let _ = std::fs::remove_file(path);
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .open(path)?;
+    file.write_all(contents)
+}
+
+/// On Windows the file inherits the ACL of the per-user `%APPDATA%` directory, which is
+/// already private to the user.
+#[cfg(not(unix))]
+fn write_private(path: &Path, contents: &[u8]) -> std::io::Result<()> {
+    std::fs::write(path, contents)
 }
 
 #[cfg(test)]
@@ -85,5 +110,23 @@ mod tests {
     #[test]
     fn a_missing_file_reads_as_none() {
         assert!(Discovery::read(&temp_path("missing")).is_none());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn only_the_owner_can_read_the_token() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let path = temp_path("permissions");
+        Discovery {
+            url: "http://127.0.0.1:5000/mcp".to_owned(),
+            token: "abc".to_owned(),
+        }
+        .write(&path)
+        .unwrap();
+
+        let mode = std::fs::metadata(&path).unwrap().permissions().mode();
+        Discovery::remove(&path);
+        assert_eq!(mode & 0o777, 0o600);
     }
 }

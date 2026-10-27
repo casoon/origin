@@ -35,6 +35,10 @@ struct Inner {
 }
 
 /// The job registry. Cloning shares the same jobs.
+///
+/// The `spawn*` methods start the job on the current Tokio runtime and must be called
+/// from inside one. Unlike the sync scheduler, which hands the host a future to run, a
+/// job has to start the moment it is submitted.
 #[derive(Debug, Clone)]
 pub struct Jobs {
     inner: Arc<RwLock<Inner>>,
@@ -218,6 +222,11 @@ impl Jobs {
                         (JobStatus::Cancelled, None, Ok(value))
                     }
                     Ok(Ok(value)) => (JobStatus::Succeeded, None, Ok(value)),
+                    // A body that saw the cancellation and bailed out with an error was
+                    // cancelled, not broken — the UI must not show it as a failure.
+                    Ok(Err(error)) if cancel.is_cancelled() => {
+                        (JobStatus::Cancelled, None, Err(error))
+                    }
                     Ok(Err(error)) => {
                         let message = error.to_string();
                         (JobStatus::Failed, Some(message), Err(error))

@@ -85,8 +85,9 @@ fn build(app: &AppHandle, config: &HostConfig) -> origin_domain::Result<Applicat
     Ok(application)
 }
 
-/// Publish the MCP endpoint over loopback while the GUI runs (G16), with a negotiated
-/// token (G19), and show the tray indicator only while a session is active (G18).
+/// Publish the MCP endpoint over loopback while the GUI runs (G16), with a random token
+/// in an owner-only discovery file (G19), and show the tray indicator only while a
+/// session is active (G18).
 fn start_mcp_http(
     app: &AppHandle,
     server: McpServer,
@@ -95,7 +96,7 @@ fn start_mcp_http(
     let path = origin_platform::paths::data_dir(APP_ID)?.join(MCP_DISCOVERY_FILE);
     let token = Token::generate();
 
-    let transport = tauri::async_runtime::block_on(HttpTransport::bind(Some(token)))
+    let transport = tauri::async_runtime::block_on(HttpTransport::bind(token))
         .map_err(|error| origin_domain::AppError::internal(error.to_string()))?;
 
     transport

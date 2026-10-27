@@ -19,10 +19,11 @@ use crate::workspace::WorkspaceRoot;
 ///
 /// `allowlist` must be the same one the runner was configured with, so the
 /// contract can pick an allowed program and construct one that is definitely
-/// not allowed.
+/// not allowed. Configure a denied argument on it to have that checked too.
 pub async fn run_all<R: ProcessRunner>(runner: &R, allowlist: &ProcessAllowlist) {
     rejects_an_unlisted_program(runner).await;
     runs_an_allowlisted_program(runner, allowlist).await;
+    rejects_a_denied_argument(runner, allowlist).await;
 }
 
 /// A program name that no product would ever allow — our guaranteed-disallowed
@@ -82,5 +83,41 @@ async fn runs_an_allowlisted_program<R: ProcessRunner>(runner: &R, allowlist: &P
                 "an allowlisted program `{allowed}` must not be rejected with Permission"
             );
         }
+    }
+}
+
+/// An implementation that only checked the program name would pass the two checks
+/// above; this one catches it.
+async fn rejects_a_denied_argument<R: ProcessRunner>(runner: &R, allowlist: &ProcessAllowlist) {
+    let Some((program, argument)) = allowlist.entries().iter().find_map(|program| {
+        allowlist
+            .denied_arguments(program)
+            .first()
+            .map(|argument| (program, argument))
+    }) else {
+        return;
+    };
+
+    let workspace_root =
+        WorkspaceRoot::new(std::env::temp_dir()).expect("the temp dir is absolute");
+
+    let result = runner
+        .run(
+            program,
+            std::slice::from_ref(argument),
+            workspace_root.as_path(),
+        )
+        .await;
+
+    match result {
+        Err(err) => assert_eq!(
+            err.kind(),
+            origin_domain::ErrorKind::Permission,
+            "a denied argument must be rejected with Permission"
+        ),
+        Ok(_) => panic!(
+            "`{program} {argument}` is denied and must be rejected before it reaches the \
+             operating system"
+        ),
     }
 }

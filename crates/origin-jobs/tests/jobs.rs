@@ -162,6 +162,39 @@ async fn cancellation_reaches_the_running_job() {
 }
 
 #[tokio::test]
+async fn a_cancelled_job_that_returns_an_error_is_recorded_as_cancelled() {
+    let (jobs, _) = jobs();
+
+    let id = jobs.spawn("export", |ctx| async move {
+        ctx.cancelled().await;
+        Err(origin_domain::AppError::internal("stopped half-way"))
+    });
+
+    jobs.cancel(&id).await.unwrap();
+
+    let probe = jobs.clone();
+    let probe_id = id.clone();
+    eventually("job to stop", || {
+        let jobs = probe.clone();
+        let id = probe_id.clone();
+        async move {
+            jobs.get(&id)
+                .await
+                .is_some_and(|job| job.status.is_terminal())
+        }
+    })
+    .await;
+
+    let job = jobs.get(&id).await.unwrap();
+    assert_eq!(
+        job.status,
+        JobStatus::Cancelled,
+        "bailing out after a cancel is not a failure"
+    );
+    assert!(job.error.is_none());
+}
+
+#[tokio::test]
 async fn cancelling_an_unknown_job_is_a_validation_error() {
     let (jobs, _) = jobs();
 

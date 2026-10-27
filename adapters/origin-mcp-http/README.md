@@ -17,17 +17,21 @@ use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 
 let server = Arc::new(McpServer::new("my-product", "0.1.0"));
-let token = Token::generate();
-let cancellation = CancellationToken::new();
 
-// Binds an ephemeral port on 127.0.0.1:0 and publishes discovery info
-let transport = HttpTransport::bind(server, token, cancellation).await?;
-let port = transport.port();
+// Binds 127.0.0.1:0 — the OS picks the port.
+let transport = HttpTransport::bind(Token::generate()).await?;
+
+// URL and token for clients, in a file only the current user can read.
+transport.discovery().write(&discovery_path)?;
+
+transport.serve(server, CancellationToken::new()).await?;
 ```
 
 Enables external AI clients to connect to an already-running GUI application without
-process restarts or single-instance collisions. Endpoint access is guarded by constant-time
-bearer token authentication and runtime discovery files.
+process restarts or single-instance collisions. Every request needs the bearer token
+(compared in constant time); requests with a foreign `Host` or `Origin` are refused, which
+keeps web pages and DNS rebinding out. Each `initialize` opens its own session
+(`Mcp-Session-Id`), so several clients can attach at once.
 
 ## Stability
 

@@ -11,7 +11,7 @@ use origin_process_std::StdProcessRunner;
 #[cfg(unix)]
 #[tokio::test]
 async fn std_process_runner_satisfies_the_process_contract() {
-    let allowlist = ProcessAllowlist::new(["uname"]);
+    let allowlist = ProcessAllowlist::new(["uname"]).deny_arguments("uname", ["-a"]);
     let runner = StdProcessRunner::new(allowlist.clone());
 
     origin_platform::process_contract::run_all(&runner, &allowlist).await;

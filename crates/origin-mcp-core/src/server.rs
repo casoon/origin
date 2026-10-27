@@ -450,13 +450,13 @@ mod tests {
         }
     }
 
-    async fn initialized_server() -> McpServer {
+    async fn initialized_server(tool: Arc<TestMutatingTool>) -> McpServer {
         let server = McpServer::new("test", "0.1.0")
             .with_permissions(AiPermissions::from([
                 AiPermission::Read,
                 AiPermission::Commit,
             ]))
-            .with_tool(Arc::new(TestMutatingTool::new()));
+            .with_tool(tool);
 
         // Fake an MCP session so tool calls don't fail on lifecycle.
         let request = Request {
@@ -483,7 +483,8 @@ mod tests {
 
     #[tokio::test]
     async fn a_mutating_tool_is_denied_when_no_confirmer_is_wired() {
-        let server = initialized_server().await;
+        let tool = Arc::new(TestMutatingTool::new());
+        let server = initialized_server(tool.clone()).await;
 
         let response = server
             .handle_line(r#"{"jsonrpc":"2.0","id":"t1","method":"tools/call","params":{"name":"test.mutate","arguments":{}}}"#)
@@ -491,16 +492,21 @@ mod tests {
             .expect("must produce a response");
 
         assert!(response.error.is_none());
+        let result = response
+            .result
+            .expect("a tool-level error still returns a result");
+        assert_eq!(result["isError"], true);
         assert!(
-            response.result.is_some(),
-            "a tool-level error still returns a result with isError:true"
+            !*tool.called.lock().unwrap(),
+            "without a confirmer the tool must not run"
         );
     }
 
     #[tokio::test]
     async fn a_mutating_tool_is_allowed_when_the_confirmer_approves() {
         let confirmer = Arc::new(AlwaysApproving::default());
-        let server = initialized_server()
+        let tool = Arc::new(TestMutatingTool::new());
+        let server = initialized_server(tool.clone())
             .await
             .with_confirmation(confirmer.clone());
 
@@ -513,5 +519,6 @@ mod tests {
 
         assert!(response.error.is_none());
         assert_eq!(confirmer.requests.lock().unwrap().len(), 1);
+        assert!(*tool.called.lock().unwrap(), "an approved tool runs");
     }
 }

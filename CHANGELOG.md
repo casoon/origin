@@ -7,6 +7,51 @@ together.
 
 ## [Unreleased]
 
+### Breaking
+
+- **MCP:** `bind()` requires a `Token`; the unauthenticated mode is gone.
+
+### Added
+
+- **Platform:** `ProcessAllowlist::deny_arguments` and `within_roots` restrict what an allowed
+  program may be asked to do; `check_invocation` is the gate every runner calls. Details:
+  [Platform contracts](https://casoon.github.io/origin/docs/concepts/architecture/#platform-contracts).
+
+### Changed
+
+- **MCP:** `initialize` opens a session of its own (`Mcp-Session-Id`, Streamable HTTP), so
+  several clients can attach to one GUI run and a reconnect works; the stdio proxy carries the
+  session through. Details:
+  [HTTP loopback & running instance attach](https://casoon.github.io/origin/docs/guides/ai-integration/#http-loopback--running-instance-attach).
+- **Platform:** `StdProcessRunner` caps a program's output at 4 MiB while reading it instead of
+  after buffering all of it, and stops the program after 10 minutes (`with_timeout` to change it).
+- **Docs:** ADR-0031 and the AI integration guide describe the discovery file as implemented,
+  instead of a GUI token negotiation and a product id that never existed.
+- **Contributors:** the MCP confirmer tests check `isError` and that the tool stays uncalled, and
+  `RelPath`'s doc no longer claims `.` components are rejected.
+
+### Fixed
+
+- **Auth:** a local request with a wrong or unreadable state is answered with 400 and ignored
+  instead of ending the whole sign-in with an error.
+- **Jobs:** a cancelled job that returns an error ends as `Cancelled`, not `Failed`.
+- **Sync:** the retry jitter is derived from the engine seed, the target, its last attempt and the
+  failure streak instead of being re-rolled on every scheduler tick, which let the earliest roll
+  win and pulled retries to the lower bound of the window.
+- **Sync:** a run is instrumented with its span instead of holding the span across `.await`, where
+  it tagged the log lines of other syncs running meanwhile.
+
+### Security
+
+- **Auth:** each connection gets 10 s to send its request line, so a silent socket cannot hold up
+  the browser's redirect until the flow times out.
+- **MCP:** requests with a foreign `Host` or `Origin` are refused with 403, which keeps web pages
+  and DNS rebinding out; the discovery file holding the token is created `0600` on Unix; and a
+  request must arrive completely within 10 s.
+- **Platform:** allowing a program no longer allows everything its arguments can do
+  (`git -c core.sshCommand=…` ran any command), and a working directory must lie under a
+  configured root — re-checked after symlinks are resolved.
+
 ## [0.2.1] - 2026-09-19
 
 ### Added

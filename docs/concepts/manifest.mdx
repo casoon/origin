@@ -122,6 +122,19 @@ allowed_programs = ["git", "code"]
 Entry names are validated at manifest load time (paths with directory separators are rejected)
 and enforced in Rust by `ProcessAllowlist` before execution reaches the operating system.
 
+Allowing a program allows everything its arguments can make it do — `git -c core.sshCommand=…`
+runs any command. Where modules pass arguments that are not fully fixed, refuse those arguments
+and confine the working directory in the composition root:
+
+```rust
+let allowlist = ProcessAllowlist::new(["git"])
+    .deny_arguments("git", ["-c", "--config-env", "--exec-path", "--upload-pack", "--receive-pack"])
+    .within_roots(confirmed_roots);
+```
+
+`StdProcessRunner` stops a program after ten minutes (`with_timeout` changes that) and keeps at
+most 4 MiB of each output stream.
+
 ## Validation
 
 The manifest is validated at parse time for things types cannot express:

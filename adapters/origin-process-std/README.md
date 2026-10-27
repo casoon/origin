@@ -24,8 +24,10 @@ assert!(output.success());
 
 Runs external commands via `tokio::process`. Enforces the security boundary in Rust before
 reaching the operating system: only binaries configured in the `ProcessAllowlist` are executed,
-arguments are passed as distinct vectors (avoiding shell escaping vulnerabilities), and stdout/stderr
-streams are bounded.
+arguments it denies (`deny_arguments`) and working directories outside its roots (`within_roots`,
+checked again after resolving symlinks) are refused, and arguments are passed as distinct vectors
+(avoiding shell escaping vulnerabilities). Each output stream is capped at 4 MiB while it is read,
+and a program is stopped after ten minutes unless `with_timeout` says otherwise.
 
 ## Stability
 

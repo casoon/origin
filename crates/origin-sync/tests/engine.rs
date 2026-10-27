@@ -199,6 +199,35 @@ async fn targets_with_different_cadences_run_independently() {
 }
 
 #[tokio::test]
+async fn a_failing_target_keeps_its_retry_time_between_ticks() {
+    let harness = harness();
+    let source = ScriptedSource::new();
+    source.queue(Err(AppError::ExternalService("boom".to_owned())));
+    let flaky = target("flaky");
+
+    harness.engine.register(
+        flaky.clone(),
+        SyncPolicy::every(Duration::minutes(5)).with_backoff(Backoff {
+            base: Duration::minutes(10),
+            max: Duration::hours(1),
+            multiplier: 2,
+            jitter: 0.5,
+        }),
+        source.clone(),
+    );
+
+    harness.engine.run_due(harness.clock.now()).await;
+    assert_eq!(source.calls(), 1);
+
+    // The scheduler asks on every tick. A jitter re-rolled each time would let the
+    // earliest roll win and drag every retry toward the lower bound.
+    let first = harness.engine.due_at(&flaky).await.unwrap();
+    for _ in 0..20 {
+        assert_eq!(harness.engine.due_at(&flaky).await.unwrap(), first);
+    }
+}
+
+#[tokio::test]
 async fn failures_back_off_exponentially_and_recover() {
     let harness = harness();
     let source = ScriptedSource::new();
