@@ -17,6 +17,13 @@ updates:
     groups:
       npm:
         patterns: ["*"]
+    ignore:
+      # svelte-check 4.7.7 — the newest there is — takes `^5.0.0 || ^6.0.0` as its
+      # TypeScript peer, so 7 fails `pnpm -r check` in frontend/ui. 6 is allowed on
+      # purpose: it is in range. Drop this once svelte-check supports 7 without the
+      # dual TypeScript 6 + 7 install and its --tsgo flag.
+      - dependency-name: "typescript"
+        versions: [">= 7.0.0"]
 
   # The actions are pinned by SHA, so every patch release of a chatty action
   # (taiki-e/install-action alone opened nine pull requests) became one of its
