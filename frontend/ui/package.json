@@ -28,9 +28,9 @@
   },
   "devDependencies": {
     "@tsconfig/svelte": "^5.0.8",
-    "svelte": "^5.56.10",
-    "svelte-check": "^4.7.6",
-    "typescript": "5.9.3"
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.7",
+    "typescript": "6.0.3"
   },
   "dependencies": {
     "@casoon/origin-client": "workspace:*"
