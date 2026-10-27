@@ -1,6 +1,6 @@
 {
   "name": "@casoon/origin-ui",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Shared Svelte 5 components and design tokens for Origin applications.",
   "license": "MIT",
   "repository": {

@@ -35,7 +35,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT"
@@ -45,39 +45,39 @@ authors = ["Jörn Seidel <joern.seidel@casoon.de>"]
 
 [workspace.dependencies]
 # --- platform crates (contracts + mechanisms) ---
-origin-domain = { path = "crates/origin-domain", version = "0.2.0" }
-origin-events = { path = "crates/origin-events", version = "0.2.0" }
-origin-platform = { path = "crates/origin-platform", version = "0.2.0" }
-origin-secrets = { path = "crates/origin-secrets", version = "0.2.0" }
-origin-settings = { path = "crates/origin-settings", version = "0.2.0" }
-origin-storage = { path = "crates/origin-storage", version = "0.2.0" }
-origin-http = { path = "crates/origin-http", version = "0.2.0" }
-origin-auth = { path = "crates/origin-auth", version = "0.2.0" }
-origin-connector = { path = "crates/origin-connector", version = "0.2.0" }
-origin-accounts = { path = "crates/origin-accounts", version = "0.2.0" }
-origin-jobs = { path = "crates/origin-jobs", version = "0.2.0" }
-origin-sync = { path = "crates/origin-sync", version = "0.2.0" }
-origin-manifest = { path = "crates/origin-manifest", version = "0.2.0" }
-origin-ai = { path = "crates/origin-ai", version = "0.2.0" }
-origin-mcp-core = { path = "crates/origin-mcp-core", version = "0.2.0" }
-origin-xtask = { path = "crates/origin-xtask", version = "0.2.0" }
-origin-telemetry = { path = "crates/origin-telemetry", version = "0.2.0" }
-origin-app = { path = "crates/origin-app", version = "0.2.0" }
+origin-domain = { path = "crates/origin-domain", version = "0.2.1" }
+origin-events = { path = "crates/origin-events", version = "0.2.1" }
+origin-platform = { path = "crates/origin-platform", version = "0.2.1" }
+origin-secrets = { path = "crates/origin-secrets", version = "0.2.1" }
+origin-settings = { path = "crates/origin-settings", version = "0.2.1" }
+origin-storage = { path = "crates/origin-storage", version = "0.2.1" }
+origin-http = { path = "crates/origin-http", version = "0.2.1" }
+origin-auth = { path = "crates/origin-auth", version = "0.2.1" }
+origin-connector = { path = "crates/origin-connector", version = "0.2.1" }
+origin-accounts = { path = "crates/origin-accounts", version = "0.2.1" }
+origin-jobs = { path = "crates/origin-jobs", version = "0.2.1" }
+origin-sync = { path = "crates/origin-sync", version = "0.2.1" }
+origin-manifest = { path = "crates/origin-manifest", version = "0.2.1" }
+origin-ai = { path = "crates/origin-ai", version = "0.2.1" }
+origin-mcp-core = { path = "crates/origin-mcp-core", version = "0.2.1" }
+origin-xtask = { path = "crates/origin-xtask", version = "0.2.1" }
+origin-telemetry = { path = "crates/origin-telemetry", version = "0.2.1" }
+origin-app = { path = "crates/origin-app", version = "0.2.1" }
 
 # --- adapters ---
-origin-storage-sqlite = { path = "adapters/origin-storage-sqlite", version = "0.2.0" }
-origin-http-reqwest = { path = "adapters/origin-http-reqwest", version = "0.2.0" }
-origin-auth-loopback = { path = "adapters/origin-auth-loopback", version = "0.2.0" }
-origin-mcp-stdio = { path = "adapters/origin-mcp-stdio", version = "0.2.0" }
-origin-mcp-http = { path = "adapters/origin-mcp-http", version = "0.2.0" }
-origin-workspace-fs = { path = "adapters/origin-workspace-fs", version = "0.2.0" }
-origin-process-std = { path = "adapters/origin-process-std", version = "0.2.0" }
-origin-workspace-watch = { path = "adapters/origin-workspace-watch", version = "0.2.0" }
-origin-secrets-system = { path = "adapters/origin-secrets-system", version = "0.2.0" }
-origin-notifications-tauri = { path = "adapters/origin-notifications-tauri", version = "0.2.0" }
+origin-storage-sqlite = { path = "adapters/origin-storage-sqlite", version = "0.2.1" }
+origin-http-reqwest = { path = "adapters/origin-http-reqwest", version = "0.2.1" }
+origin-auth-loopback = { path = "adapters/origin-auth-loopback", version = "0.2.1" }
+origin-mcp-stdio = { path = "adapters/origin-mcp-stdio", version = "0.2.1" }
+origin-mcp-http = { path = "adapters/origin-mcp-http", version = "0.2.1" }
+origin-workspace-fs = { path = "adapters/origin-workspace-fs", version = "0.2.1" }
+origin-process-std = { path = "adapters/origin-process-std", version = "0.2.1" }
+origin-workspace-watch = { path = "adapters/origin-workspace-watch", version = "0.2.1" }
+origin-secrets-system = { path = "adapters/origin-secrets-system", version = "0.2.1" }
+origin-notifications-tauri = { path = "adapters/origin-notifications-tauri", version = "0.2.1" }
 
 # --- host ---
-origin-tauri = { path = "host/origin-tauri", version = "0.2.0" }
+origin-tauri = { path = "host/origin-tauri", version = "0.2.1" }
 
 # --- third party ---
 async-trait = "0.1.92"

@@ -2,6 +2,8 @@
 
 **A reference architecture and starter system for modular desktop applications built with Rust and Tauri.**
 
+**Website and documentation:** [casoon.github.io/origin](https://casoon.github.io/origin/)
+
 Origin is not a framework that replaces Tauri, and not a monolithic crate every
 application must depend on. It is an opinionated set of architecture rules, reusable
 platform crates, security conventions and build processes — plus a reference

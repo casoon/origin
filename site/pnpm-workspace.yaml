@@ -1,0 +1,3 @@
+# Own workspace root: keeps pnpm from resolving the repository-root workspace
+# (frontend/*, examples/demo) when installing the site.
+packages: []

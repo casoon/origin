@@ -10,7 +10,7 @@
 #   scripts/publish-crates.sh              check crates.io metadata, publish nothing
 #   scripts/publish-crates.sh --execute     actually publish, one crate at a time
 #
-# See docs/publishing.md for the full picture (why this order, what is deliberately
+# See docs/lifecycle/publishing.md for the full picture (why this order, what is deliberately
 # excluded, and what to do if a publish fails partway through).
 
 set -euo pipefail
@@ -63,7 +63,7 @@ workspace_version="$(grep -m1 '^version = ' "$root/Cargo.toml" | sed -E 's/versi
 
 # Every workspace crate except the demo and the repository's own `xtask` binary, in the
 # order it must land on crates.io: each entry may depend on any before it, never on one
-# after it (see docs/publishing.md for how that order was derived). The first 21 are what
+# after it (see docs/lifecycle/publishing.md for how that order was derived). The first 21 are what
 # a generated product needs; the last 8 are optional crates a product opts into.
 crates=(
   "origin-domain:crates"
@@ -263,7 +263,7 @@ if [[ "$check_names" == true ]]; then
   echo "checking name availability on crates.io..."
   if ! check_names; then
     echo
-    echo "one or more names are already taken — see docs/publishing.md." >&2
+    echo "one or more names are already taken — see docs/lifecycle/publishing.md." >&2
     exit 1
   fi
   echo "names: all unclaimed"

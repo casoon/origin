@@ -1,0 +1,173 @@
+---
+import {
+  Badge,
+  Badges,
+  Button,
+  CodeBlock,
+  Facts,
+  Features,
+  Hero,
+  Install,
+  Quickstart,
+} from '@casoon/pages-theme/components';
+import Base from '@casoon/pages-theme/layouts/Base.astro';
+import config from 'virtual:casoon-pages/config';
+import { url } from '@casoon/pages-theme/url';
+// Animated SVG built with castwright from site/captures/new-app.terminal.yaml.
+import newAppSvg from '../../captures/new-app.svg?url';
+import Diagram from '../components/Diagram.astro';
+
+const quickstart = `git clone https://github.com/casoon/origin
+cd origin
+pnpm install
+cargo xtask demo`;
+---
+
+<Base>
+  <Hero
+    title="Desktop apps that stop reinventing the platform."
+    lead="Origin is a starting point for desktop applications in Rust and Tauri. Sign-in, storage, sync, background jobs, notifications, permissions and the project structure are already there, tested and shared, so a new product starts with its own features instead of the plumbing."
+  >
+    <Install
+      commands={[
+        { label: 'git', command: 'git clone https://github.com/casoon/origin' },
+        { label: 'cargo', command: 'cargo add origin-app origin-tauri' },
+        { label: 'pnpm', command: 'pnpm add @casoon/origin-client @casoon/origin-ui' },
+      ]}
+    />
+    <Badges>
+      <Badge>MIT</Badge>
+      <Badge>v{config.version}</Badge>
+      <Badge>Rust 1.88+</Badge>
+      <Badge>Tauri 2</Badge>
+    </Badges>
+    <img
+      slot="output"
+      class="terminal-demo"
+      src={newAppSvg}
+      width="561.6"
+      height="278"
+      alt="Terminal: cargo xtask new my-app --into .. prints 'generated files for app.toml' and 'created ../my-app', then the next steps cd ../my-app, pnpm install and cargo tauri dev, and a reminder to replace the placeholder icons in src-tauri/icons before shipping."
+    />
+  </Hero>
+
+  <Features
+    heading="Who it is for"
+    items={[
+      {
+        title: 'Teams building more than one desktop app',
+        body: 'Every product needs the same sign-in, settings, storage and notifications. Origin keeps them in shared crates, so a fix lands in every app instead of being copied four times.',
+      },
+      {
+        title: 'Developers starting a Tauri project',
+        body: 'cargo xtask new gives you a project that already has logging, error handling, settings, credentials, a security profile and CI, and passes its own checks on day one.',
+      },
+      {
+        title: 'Anyone who wants the app tested without a desktop',
+        body: 'Your features are plain Rust that does not know Tauri exists. The whole application runs in a unit test, with fake time and recorded notifications.',
+      },
+    ]}
+  />
+
+  <Facts
+    items={[
+      { value: '29', label: 'crates on crates.io, all at 0.2.1' },
+      { value: '15', label: 'binding rules in ARCHITECTURE.md' },
+      { value: '31', label: 'architecture decision records' },
+      { value: '4', label: 'named security profiles instead of permission lists' },
+    ]}
+  />
+
+  <Features
+    heading="What you get"
+    items={[
+      {
+        title: 'Least privilege, checked by the build',
+        body: 'Each window gets a named security profile, and the build fails on a blanket filesystem or shell grant.',
+      },
+      {
+        title: 'Sign-in and sync done carefully',
+        body: 'OAuth for several accounts per service, and a sync engine that handles retries, backoff and going offline for you.',
+      },
+      {
+        title: 'Rust and the frontend cannot drift apart',
+        body: 'Permission files and the types the UI receives are generated from one source, so a rename fails in CI, not in front of a user.',
+      },
+      {
+        title: 'Bring your own AI client',
+        body: 'Over MCP, the AI the user already has can read the app and propose changes, with a permission level of its own.',
+      },
+    ]}
+  />
+
+  <section class="how" aria-labelledby="how-heading">
+    <h2 id="how-heading">How it works</h2>
+    <div class="text">
+      <p>
+        Tauri is only the host. Your application is a set of Rust modules, put together in one
+        function, the composition root. The desktop window, an AI client and your tests all drive
+        that same application.
+      </p>
+      <p>
+        Below it, the Origin crates provide sign-in, sync, jobs and storage against small
+        traits. Adapters fill those traits with SQLite, the system keychain and native
+        notifications, and each one can be swapped without touching your features.
+      </p>
+    </div>
+    <Diagram name="how-it-works" format="svg" narrow={{ width: 560, height: 820 }} />
+    <div class="links">
+      <Button href={url('docs/concepts/overview/')} variant="secondary">Architecture overview</Button>
+      <Button href={url('docs/concepts/manifest/')} variant="secondary">The manifest and generated files</Button>
+      <Button href={url('docs/guides/authentication/')} variant="quiet">Authentication →</Button>
+    </div>
+  </section>
+
+  <Quickstart
+    lead="Run the reference application: a tray app with a background loop, cached readings, typed events, native notifications and a Svelte 5 frontend."
+    steps={[
+      'Install Rust 1.88+, Node 22+, pnpm 10+ and the Tauri CLI.',
+      'Clone the repository and run <code>pnpm install</code>.',
+      'Start the demo with <code>cargo xtask demo</code>, then read its composition root.',
+    ]}
+  >
+    <CodeBlock code={quickstart} lang="shell" title="terminal" label="Shell" />
+  </Quickstart>
+</Base>
+
+<style>
+  /* Never scale the SVG beyond a readable terminal size. */
+  .terminal-demo {
+    display: block;
+    width: 100%;
+    max-width: 720px;
+    height: auto;
+    margin: 0 auto;
+  }
+  .how {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+  h2 {
+    margin: 0 0 14px;
+    color: var(--heading);
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .text {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    gap: 0 48px;
+  }
+  .text p {
+    margin: 0 0 16px;
+    font-size: 15.5px;
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+</style>
