@@ -13,7 +13,7 @@ use origin_manifest::{Manifest, SecurityProfile};
 use std::path::{Path, PathBuf};
 
 /// The Origin version this build migrates projects to.
-pub const CURRENT: Version = Version::new(0, 2, 0);
+pub const CURRENT: Version = Version::new(0, 3, 0);
 
 /// What a migration did, and what it could not do by itself.
 #[derive(Debug, Default)]
