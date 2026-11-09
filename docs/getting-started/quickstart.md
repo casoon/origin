@@ -6,7 +6,7 @@ order: 2
 
 ## Prerequisites
 
-Rust 1.88+, Node 22+, pnpm 10+, and the Tauri CLI (`cargo install tauri-cli --version "^2"`).
+Rust 1.89+, Node 22+, pnpm 10+, and the Tauri CLI (`cargo install tauri-cli --version "^2"`).
 On Linux, install the Tauri system dependencies listed in the [README](https://github.com/casoon/origin/blob/main/README.md).
 
 ## Run the reference application

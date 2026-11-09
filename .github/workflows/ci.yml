@@ -154,25 +154,25 @@ jobs:
         # credential store and is run deliberately by developers.
         run: cargo test --workspace
 
-  # `rust-version = "1.88"` in Cargo.toml is a promise, not a hope — this is what
+  # `rust-version = "1.89"` in Cargo.toml is a promise, not a hope — this is what
   # holds it to that.
   msrv:
-    name: MSRV (1.88)
+    name: MSRV (1.89)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # rust-toolchain.toml pins `stable` and overrides the toolchain installed below;
-    # RUSTUP_TOOLCHAIN takes precedence over it, so this job really builds with 1.88.
+    # RUSTUP_TOOLCHAIN takes precedence over it, so this job really builds with 1.89.
     env:
-      RUSTUP_TOOLCHAIN: 1.88.0
+      RUSTUP_TOOLCHAIN: 1.89.0
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # origin-tauri and origin-notifications-tauri are published, so 1.88 has to
+      # origin-tauri and origin-notifications-tauri are published, so 1.89 has to
       # build them too and the webkit/gtk headers stay.
       - name: Install Tauri system dependencies
         uses: ./.github/actions/tauri-system-deps
 
-      - uses: dtolnay/rust-toolchain@2eae45db285e407f22119950686d47e1101e071b # 1.88.0
+      - uses: dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66 # 1.89.0
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: rustc --version
 
