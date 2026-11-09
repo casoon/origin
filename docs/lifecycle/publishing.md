@@ -54,6 +54,11 @@ order, so a partial run is easy to reason about.)
   first real publish (needs network access to crates.io; degrades to "could not check"
   per name rather than failing if that access is unavailable).
 - All 30 crates share the workspace version; the script publishes that version.
+- On a minor release, `origin_xtask::CURRENT_VERSION` (`migrations::CURRENT`) moves to the
+  same minor first: `origin new` writes it into the project's `app.toml` and into the
+  dependency ranges, so a stale value scaffolds projects against the previous minor. The
+  npm packages at that version must be on the registry before the crates are, because the
+  scaffolded `package.json` asks for them.
 
 ## Running it
 

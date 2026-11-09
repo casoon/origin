@@ -7,6 +7,10 @@ together.
 
 ## [Unreleased]
 
+### Fixed
+
+- **CLI:** `origin new` scaffolds against the current minor (0.3) instead of 0.2: `CURRENT_VERSION` was not moved with the 0.3.0 release. Details: [Publishing](https://casoon.github.io/origin/docs/lifecycle/publishing/).
+
 ## [0.3.0] - 2026-11-09
 
 ### Breaking

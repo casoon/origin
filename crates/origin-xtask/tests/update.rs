@@ -71,7 +71,8 @@ fn the_project_records_the_version_it_now_tracks() {
     origin_xtask::update(&project, false).expect("update");
 
     let manifest = read(&project.join("app.toml"));
-    assert!(manifest.contains(r#"version = "0.2.0""#), "got: {manifest}");
+    let tracked = format!(r#"version = "{}""#, origin_xtask::CURRENT_VERSION);
+    assert!(manifest.contains(&tracked), "got: {manifest}");
     assert!(
         manifest.contains("# A project on origin 0.1.0"),
         "comments must survive — this is a file a human wrote and will read again"
