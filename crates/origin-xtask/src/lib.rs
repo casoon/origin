@@ -26,7 +26,7 @@ pub use version::Version;
 
 /// The Origin version a project scaffolded or updated right now tracks.
 ///
-/// Read by `origin-cli` when it stamps `app.toml`, so the tool that creates a
+/// Read by `origin-kit` when it stamps `app.toml`, so the tool that creates a
 /// project and the migrations that later move it forward cannot disagree about
 /// where it started.
 pub use migrations::CURRENT as CURRENT_VERSION;
@@ -86,7 +86,7 @@ fn usage() {
            new <slug>         create a new application from the template\n  \
            ci                 fmt --check, clippy -D warnings, test, generate --check, validate\n  \
            demo               run the reference application\n\n\
-         A new application comes from `origin new` (the `origin-cli` crate), not from\n\
+         A new application comes from `origin new` (the `origin-kit` crate), not from\n\
          here: scaffolding needs the template, a project does not.\n"
     );
 }

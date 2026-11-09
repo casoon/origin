@@ -5,7 +5,7 @@ order: 2
 ---
 
 Products scaffolded with `origin new` depend on the `origin-*` crates by registry
-version, not by path (see ADR-0026 and `crates/origin-cli/src/scaffold.rs`). Pass
+version, not by path (see ADR-0026 and `crates/origin-kit/src/scaffold.rs`). Pass
 `--local` only when a generated product should use the current Origin checkout.
 
 This document is the checklist for the real thing. Publishing itself is a manual,
@@ -15,7 +15,7 @@ deliberate act (`scripts/publish-crates.sh --execute`); nothing here runs on its
 
 Every workspace crate is published except the demo and the repository's own `xtask`
 binary. The first 21 are what the template's own dependencies pull in, transitively;
-`origin-cli` is the tool that writes a project in the first place; the last 8 (`origin-ai`, `origin-mcp-core`, `origin-auth-loopback`, `origin-mcp-stdio`,
+`origin-kit` is the tool that writes a project in the first place; the last 8 (`origin-ai`, `origin-mcp-core`, `origin-auth-loopback`, `origin-mcp-stdio`,
 `origin-mcp-http`, `origin-process-std`, `origin-workspace-fs`, `origin-workspace-watch`)
 are optional crates a product adds when it needs them.
 
@@ -36,7 +36,7 @@ origin-accounts
 origin-app
 origin-tauri
 origin-xtask
-origin-cli
+origin-kit
 origin-ai, origin-mcp-core, origin-auth-loopback, origin-process-std,
   origin-workspace-fs, origin-workspace-watch
 origin-mcp-stdio, origin-mcp-http

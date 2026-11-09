@@ -1,5 +1,5 @@
 [package]
-name = "origin-cli"
+name = "origin-kit"
 description = "The `origin` command: create a new Origin application from the embedded project template, without a checkout of Origin."
 version.workspace = true
 edition.workspace = true

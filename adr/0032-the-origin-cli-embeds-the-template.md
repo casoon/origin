@@ -17,7 +17,7 @@ template simply been embedded there.
 
 ## Decision
 
-Scaffolding moves into its own crate, **`origin-cli`**, which installs the `origin`
+Scaffolding moves into its own crate, **`origin-kit`**, which installs the `origin`
 binary. The template is compiled into that binary (`build.rs` generates an
 `include_bytes!` table), so `origin new` needs Rust and nothing else.
 
@@ -25,20 +25,20 @@ binary. The template is compiled into that binary (`build.rs` generates an
   `update`, `ci` — and exports the Origin version it tracks (`CURRENT_VERSION`), so the
   tool that creates a project and the migrations that later move it cannot disagree
   about where it started. `cargo xtask new` is removed.
-- **The template lives in `crates/origin-cli/templates`.** `cargo package` skips every
+- **The template lives in `crates/origin-kit/templates`.** `cargo package` skips every
   directory that holds a `Cargo.toml`, which would leave the published crate without a
   template. The template's three manifests are therefore stored as `Cargo.toml.in` and
   written under their real names. A test fails if a template manifest is ever named
   `Cargo.toml`, because the failure is invisible in a checkout and appears only after
-  `cargo install origin-cli`.
+  `cargo install origin-kit`.
 - **`--local` stays**, and fails with a message outside a checkout of Origin instead of
   guessing a root.
 - **No argument parser.** One command with four flags does not need one.
 
 ## Consequences
 
-- `cargo install origin-cli && origin new my-app` is the entry path; no clone.
-- Origin's own CI scaffolds through `cargo run -p origin-cli -- new … --local`; ADR-0026
+- `cargo install origin-kit && origin new my-app` is the entry path; no clone.
+- Origin's own CI scaffolds through `cargo run -p origin-kit -- new … --local`; ADR-0026
   is unchanged in substance.
 - One more published crate (30), published after `origin-xtask`.
 - The embedded template is the version of the CLI that was installed. A project created

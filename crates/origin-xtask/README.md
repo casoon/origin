@@ -20,7 +20,7 @@ fn main() -> std::process::ExitCode {
 
 `origin_xtask::main()` dispatches on the first process argument (`validate`, `generate`,
 `update`, `ci`, `demo`) and returns the process exit code. Creating a project is not one
-of them: that is `origin new`, from the `origin-cli` crate.
+of them: that is `origin new`, from the `origin-kit` crate.
 
 ## Stability
 

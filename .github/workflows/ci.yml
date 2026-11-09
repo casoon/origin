@@ -59,7 +59,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Scaffold a project against this checkout
-        run: cargo run -p origin-cli -- new sample-app --into "$RUNNER_TEMP" --local
+        run: cargo run -p origin-kit -- new sample-app --into "$RUNNER_TEMP" --local
 
       - name: The generated project passes its own rules
         working-directory: ${{ runner.temp }}/sample-app

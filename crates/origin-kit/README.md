@@ -1,4 +1,4 @@
-# origin-cli
+# origin-kit
 
 The `origin` command: create a new Origin application from the embedded project
 template, without a checkout of Origin.
@@ -12,7 +12,7 @@ for the rules this crate follows.
 ## Example
 
 ```bash
-cargo install origin-cli
+cargo install origin-kit
 origin new my-app --name "My App" --id dev.example.myapp
 ```
 

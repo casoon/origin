@@ -7,7 +7,7 @@ struct Scratch(PathBuf);
 
 impl Scratch {
     fn new(name: &str) -> Self {
-        let path = std::env::temp_dir().join(format!("origin-cli-{name}-{}", std::process::id()));
+        let path = std::env::temp_dir().join(format!("origin-kit-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&path);
         std::fs::create_dir_all(&path).expect("cannot create the scratch directory");
         Self(path)
@@ -24,10 +24,10 @@ impl Drop for Scratch {
 /// a `Cargo.toml`, so a template manifest under its real name would be missing from
 /// the published crate — and `origin new` would write a project without a manifest.
 /// A test, because the failure is invisible in a checkout and only appears after
-/// `cargo install origin-cli` (ADR-0032).
+/// `cargo install origin-kit` (ADR-0032).
 #[test]
 fn no_template_file_is_named_cargo_toml() {
-    let offenders: Vec<&str> = origin_cli::template_files()
+    let offenders: Vec<&str> = origin_kit::template_files()
         .iter()
         .map(|(path, _)| *path)
         .filter(|path| {
@@ -46,7 +46,7 @@ fn no_template_file_is_named_cargo_toml() {
 
 #[test]
 fn the_template_is_embedded() {
-    let paths: Vec<&str> = origin_cli::template_files()
+    let paths: Vec<&str> = origin_kit::template_files()
         .iter()
         .map(|(path, _)| *path)
         .collect();
@@ -75,14 +75,14 @@ fn the_template_is_embedded() {
 fn a_scaffolded_project_has_no_placeholders_left() {
     let scratch = Scratch::new("scaffold");
 
-    let options = origin_cli::Options {
+    let options = origin_kit::Options {
         slug: "sample-app".to_owned(),
         name: "Sample App".to_owned(),
         id: "dev.example.sampleapp".to_owned(),
         into: scratch.0.clone(),
         local: None,
     };
-    origin_cli::run(&options).expect("scaffolding failed");
+    origin_kit::run(&options).expect("scaffolding failed");
 
     let project = scratch.0.join("sample-app");
 

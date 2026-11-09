@@ -80,7 +80,7 @@ fn new(flags: &[String]) -> Result<(), String> {
 
     let local = flags.iter().any(|flag| flag == "--local");
 
-    let options = origin_cli::Options {
+    let options = origin_kit::Options {
         name: value("--name").unwrap_or_else(|| title_case(&slug)),
         id: value("--id").unwrap_or_else(|| format!("dev.local.{}", slug.replace('-', ""))),
         into: value("--into")
@@ -96,7 +96,7 @@ fn new(flags: &[String]) -> Result<(), String> {
         slug,
     };
 
-    origin_cli::run(&options)
+    origin_kit::run(&options)
 }
 
 /// The Origin checkout `--local` should point the generated project at.
