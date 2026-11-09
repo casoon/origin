@@ -87,7 +87,7 @@ repository.
 ## Starting a new project
 
 ```bash
-cargo install origin-cli
+cargo install origin-kit
 origin new my-app --name "My App" --id dev.example.myapp
 ```
 

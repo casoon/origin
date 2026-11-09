@@ -3057,14 +3057,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "origin-cli"
-version = "0.3.0"
-dependencies = [
- "origin-xtask",
- "toml_edit 0.25.15+spec-1.1.0",
-]
-
-[[package]]
 name = "origin-connector"
 version = "0.3.0"
 dependencies = [
@@ -3167,6 +3159,14 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "origin-kit"
+version = "0.3.0"
+dependencies = [
+ "origin-xtask",
+ "toml_edit 0.25.15+spec-1.1.0",
 ]
 
 [[package]]

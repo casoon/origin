@@ -87,7 +87,7 @@ crates=(
   "origin-app:crates"
   "origin-tauri:host"
   "origin-xtask:crates"
-  "origin-cli:crates"
+  "origin-kit:crates"
   "origin-ai:crates"
   "origin-mcp-core:crates"
   "origin-auth-loopback:adapters"

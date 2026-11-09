@@ -26,7 +26,7 @@ sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev \
 ## Scaffold a product
 
 ```bash
-cargo install origin-cli
+cargo install origin-kit
 origin new my-app --name "My App" --id dev.example.myapp --into ~/projects
 ```
 
@@ -63,10 +63,10 @@ This builds and starts the reference application. The [Quickstart](../quickstart
 what it demonstrates and which files to read first.
 
 From a checkout, scaffolding runs out of the workspace instead of an installed binary —
-the template lives in `crates/origin-cli/templates`:
+the template lives in `crates/origin-kit/templates`:
 
 ```bash
-cargo run -p origin-cli -- new my-app --into ~/projects --local
+cargo run -p origin-kit -- new my-app --into ~/projects --local
 ```
 
 ## Use single crates

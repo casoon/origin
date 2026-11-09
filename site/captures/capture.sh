@@ -14,5 +14,5 @@ if [ -e ../my-app ]; then
   echo "../my-app already exists" >&2
   exit 1
 fi
-cargo run -q -p origin-cli -- new my-app --into .. 2>/dev/null > site/captures/new-app.txt
+cargo run -q -p origin-kit -- new my-app --into .. 2>/dev/null > site/captures/new-app.txt
 rm -rf ../my-app
