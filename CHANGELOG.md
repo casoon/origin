@@ -7,6 +7,8 @@ together.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-09
+
 ### Changed
 
 - **Platform:** the minimum supported Rust version is 1.89 (was 1.88); `rusqlite` 0.41 needs it. Generated projects declare it too.
