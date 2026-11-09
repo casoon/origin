@@ -7,9 +7,17 @@ together.
 
 ## [Unreleased]
 
+### Changed
+
+- **Platform:** the minimum supported Rust version is 1.89 (was 1.88); `rusqlite` 0.41 needs it. Generated projects declare it too.
+
 ### Fixed
 
 - **CLI:** `origin new` scaffolds against the current minor (0.3) instead of 0.2: `CURRENT_VERSION` was not moved with the 0.3.0 release. Details: [Publishing](https://casoon.github.io/origin/docs/lifecycle/publishing/).
+
+### Security
+
+- **Storage:** `origin-storage-sqlite` bundles SQLite 3.54 through `rusqlite` 0.41, which closes RUSTSEC-2026-0459 (uninitialised memory returned for a mismatched database/WAL pair).
 
 ## [0.3.0] - 2026-11-09
 

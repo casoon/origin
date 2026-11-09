@@ -113,7 +113,7 @@ adr/               architecture decision records
 
 | Tool | Version |
 | --- | --- |
-| Rust | 1.88 or newer |
+| Rust | 1.89 or newer |
 | Node | 22 or newer |
 | pnpm | 10 or newer |
 | Tauri CLI | 2.x (`cargo install tauri-cli --version "^2"`) |
