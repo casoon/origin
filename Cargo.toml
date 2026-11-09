@@ -17,6 +17,7 @@ members = [
     "crates/origin-ai",
     "crates/origin-mcp-core",
     "crates/origin-xtask",
+    "crates/origin-cli",
     "crates/origin-telemetry",
     "crates/origin-app",
     "adapters/origin-storage-sqlite",

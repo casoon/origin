@@ -3057,6 +3057,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "origin-cli"
+version = "0.2.1"
+dependencies = [
+ "origin-xtask",
+ "toml_edit 0.25.15+spec-1.1.0",
+]
+
+[[package]]
 name = "origin-connector"
 version = "0.2.1"
 dependencies = [

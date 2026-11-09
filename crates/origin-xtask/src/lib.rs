@@ -16,15 +16,20 @@
 mod contracts;
 mod generate;
 mod migrations;
-mod scaffold;
 mod update;
 mod validate;
 mod version;
 
 pub use generate::{check as check_generated, run as generate};
-pub use scaffold::{Options as NewOptions, run as new};
 pub use update::run as update;
 pub use version::Version;
+
+/// The Origin version a project scaffolded or updated right now tracks.
+///
+/// Read by `origin-cli` when it stamps `app.toml`, so the tool that creates a
+/// project and the migrations that later move it forward cannot disagree about
+/// where it started.
+pub use migrations::CURRENT as CURRENT_VERSION;
 
 pub(crate) use generate::find_manifests;
 pub use validate::run as validate;
@@ -47,7 +52,6 @@ pub fn main() -> ExitCode {
             &workspace_root(),
             flags.iter().any(|flag| flag == "--dry-run"),
         ),
-        Some("new") => new_from_args(&flags),
         Some("ci") => ci(),
         Some("demo") => demo(),
         Some(other) => {
@@ -81,60 +85,10 @@ fn usage() {
            update --dry-run   report what an update would change\n  \
            new <slug>         create a new application from the template\n  \
            ci                 fmt --check, clippy -D warnings, test, generate --check, validate\n  \
-           demo               run the reference application\n"
+           demo               run the reference application\n\n\
+         A new application comes from `origin new` (the `origin-cli` crate), not from\n\
+         here: scaffolding needs the template, a project does not.\n"
     );
-}
-
-/// Parse `new <slug> [--name X] [--id Y] [--into DIR] [--local]`.
-fn new_from_args(flags: &[String]) -> Result<(), String> {
-    let root = workspace_root();
-
-    let slug = flags
-        .first()
-        .filter(|argument| !argument.starts_with("--"))
-        .ok_or_else(|| {
-            "usage: cargo xtask new <slug> [--name X] [--id Y] [--into DIR] [--local]".to_owned()
-        })?
-        .clone();
-
-    let value = |name: &str| -> Option<String> {
-        flags
-            .iter()
-            .position(|flag| flag == name)
-            .and_then(|index| flags.get(index + 1))
-            .cloned()
-    };
-
-    let options = scaffold::Options {
-        name: value("--name").unwrap_or_else(|| title_case(&slug)),
-        id: value("--id").unwrap_or_else(|| format!("dev.local.{}", slug.replace('-', ""))),
-        into: value("--into")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| root.clone()),
-        // Released Origin packages are the normal dependency source. `--local` is
-        // reserved for Origin's downstream CI and side-by-side platform development.
-        local: flags
-            .iter()
-            .any(|flag| flag == "--local")
-            .then(|| root.clone()),
-        slug,
-    };
-
-    scaffold::run(&root, &options)
-}
-
-/// `my-app` → `My App`.
-fn title_case(slug: &str) -> String {
-    slug.split(['-', '_'])
-        .map(|word| {
-            let mut characters = word.chars();
-            match characters.next() {
-                Some(first) => first.to_uppercase().collect::<String>() + characters.as_str(),
-                None => String::new(),
-            }
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
 }
 
 fn ci() -> Result<(), String> {

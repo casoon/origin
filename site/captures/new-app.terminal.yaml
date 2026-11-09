@@ -6,7 +6,7 @@ terminal:
   rows: 13
   theme: catppuccin-mocha
 steps:
-  - run: cargo xtask new my-app --into ..
+  - run: origin new my-app --into ..
   - wait: 900
   - show: new-app.txt
     lang: text

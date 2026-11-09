@@ -1,6 +1,6 @@
 ---
 title: Updating a project
-description: "Scaffold a product with cargo xtask new and keep it current with tested migrations."
+description: "Scaffold a product with origin new and keep it current with tested migrations."
 order: 1
 ---
 
@@ -87,7 +87,8 @@ repository.
 ## Starting a new project
 
 ```bash
-cargo xtask new my-app --name "My App" --id dev.example.myapp
+cargo install origin-cli
+origin new my-app --name "My App" --id dev.example.myapp
 ```
 
 The result is not a blank window: it is the architecture contract, logging, error
@@ -95,6 +96,6 @@ handling, settings, secrets, storage, a security profile, CI, and a module that 
 already testable without a desktop session. Its `xtask` is three lines, so the rules
 and the generator arrive with a version bump.
 
-Scaffolding uses released registry versions by default. Pass `--local` to point the
-generated project at the current Origin checkout instead. Origin's own CI always tests
+Scaffolding uses released registry versions by default. Pass `--local` from inside a
+checkout of Origin to point the generated project at it instead. Origin's own CI always tests
 that local form against `main` (ADR-0026).
