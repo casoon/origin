@@ -7,6 +7,8 @@ together.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-09
+
 ### Breaking
 
 - **CLI:** `cargo xtask new` is gone; `origin new` replaces it. `origin_xtask::new` and `NewOptions` moved to `origin-cli`.
