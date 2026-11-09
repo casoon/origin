@@ -1,0 +1,30 @@
+[package]
+name = "origin-cli"
+description = "The `origin` command: create a new Origin application from the embedded project template, without a checkout of Origin."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+readme = "README.md"
+keywords = ["tauri", "scaffolding", "cli", "desktop", "template"]
+categories = ["command-line-utilities", "development-tools::cargo-plugins"]
+
+[[bin]]
+name = "origin"
+path = "src/main.rs"
+
+[dependencies]
+origin-xtask = { workspace = true }
+toml_edit = "0.25"
+
+# A command-line tool writes to stdout; that is its interface, not a leftover debug
+# print. The workspace lints forbid it, so this crate states its own, as origin-xtask
+# does.
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

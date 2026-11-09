@@ -48,3 +48,4 @@ An ADR is never edited to change its decision — it is superseded by a new one.
 | [0029](0029-the-ai-permission-level.md) | The AI Permission Level | Accepted |
 | [0030](0030-distribution.md) | Distribution | Accepted |
 | [0031](0031-mcp-over-http.md) | MCP over Local HTTP Loopback | Accepted |
+| [0032](0032-the-origin-cli-embeds-the-template.md) | The `origin` CLI Embeds the Template | Accepted |

@@ -4,18 +4,18 @@ description: "The manual checklist for publishing the origin-* crates and the tw
 order: 2
 ---
 
-Products scaffolded with `cargo xtask new` depend on the `origin-*` crates by registry
-version, not by path (see ADR-0026 and `crates/origin-xtask/src/scaffold.rs`). Pass
+Products scaffolded with `origin new` depend on the `origin-*` crates by registry
+version, not by path (see ADR-0026 and `crates/origin-cli/src/scaffold.rs`). Pass
 `--local` only when a generated product should use the current Origin checkout.
 
 This document is the checklist for the real thing. Publishing itself is a manual,
 deliberate act (`scripts/publish-crates.sh --execute`); nothing here runs on its own.
 
-## Why these 29, in this order
+## Why these 30, in this order
 
 Every workspace crate is published except the demo and the repository's own `xtask`
-binary. The first 21 are what the template's own dependencies pull in, transitively; the
-last 8 (`origin-ai`, `origin-mcp-core`, `origin-auth-loopback`, `origin-mcp-stdio`,
+binary. The first 21 are what the template's own dependencies pull in, transitively;
+`origin-cli` is the tool that writes a project in the first place; the last 8 (`origin-ai`, `origin-mcp-core`, `origin-auth-loopback`, `origin-mcp-stdio`,
 `origin-mcp-http`, `origin-process-std`, `origin-workspace-fs`, `origin-workspace-watch`)
 are optional crates a product adds when it needs them.
 
@@ -36,6 +36,7 @@ origin-accounts
 origin-app
 origin-tauri
 origin-xtask
+origin-cli
 origin-ai, origin-mcp-core, origin-auth-loopback, origin-process-std,
   origin-workspace-fs, origin-workspace-watch
 origin-mcp-stdio, origin-mcp-http
@@ -52,7 +53,7 @@ order, so a partial run is easy to reason about.)
 - Crate name availability: run `scripts/publish-crates.sh --check-names` before the
   first real publish (needs network access to crates.io; degrades to "could not check"
   per name rather than failing if that access is unavailable).
-- All 29 crates share the workspace version; the script publishes that version.
+- All 30 crates share the workspace version; the script publishes that version.
 
 ## Running it
 

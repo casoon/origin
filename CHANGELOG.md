@@ -7,12 +7,16 @@ together.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-09
+
 ### Breaking
 
+- **CLI:** `cargo xtask new` is gone; `origin new` replaces it. `origin_xtask::new` and `NewOptions` moved to `origin-cli`.
 - **MCP:** `bind()` requires a `Token`; the unauthenticated mode is gone.
 
 ### Added
 
+- **CLI:** `origin new` creates a project without a checkout of Origin: `cargo install origin-cli`, then `origin new my-app`. The template is compiled into the binary. Details: [Installation](https://casoon.github.io/origin/docs/getting-started/installation/).
 - **Platform:** `ProcessAllowlist::deny_arguments` and `within_roots` restrict what an allowed
   program may be asked to do; `check_invocation` is the gate every runner calls. Details:
   [Platform contracts](https://casoon.github.io/origin/docs/concepts/architecture/#platform-contracts).

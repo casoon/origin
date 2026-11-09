@@ -1,15 +1,21 @@
-//! `cargo xtask new` — a new application from the template.
+//! `origin new` — a new application from the embedded template.
 //!
 //! What the template gives a product on day one is not a blank window: it is the
 //! architecture contract, logging, error handling, settings, secrets, storage, the
 //! security profile, CI, and a module that is already testable without a desktop
 //! session.
 
-use crate::migrations::CURRENT;
 use std::path::{Path, PathBuf};
+
+use origin_xtask::CURRENT_VERSION;
 
 /// Files copied verbatim; everything else is treated as text and substituted.
 const BINARY_EXTENSIONS: &[&str] = &["png", "ico", "icns", "jpg", "jpeg", "webp"];
+
+/// Suffix carried by a template file whose real name would make `cargo package` skip
+/// the directory it lives in — a nested `Cargo.toml` does exactly that, and the
+/// template has three. Stripped when the file is written (ADR-0032).
+const RENAMED_SUFFIX: &str = ".in";
 
 #[derive(Debug)]
 pub struct Options {
@@ -28,16 +34,8 @@ pub struct Options {
     pub local: Option<PathBuf>,
 }
 
-pub fn run(root: &Path, options: &Options) -> Result<(), String> {
+pub fn run(options: &Options) -> Result<(), String> {
     validate_options(options)?;
-
-    let template = root.join("templates").join("app");
-    if !template.is_dir() {
-        return Err(format!(
-            "no template at {} — scaffolding currently needs the Origin repository",
-            template.display()
-        ));
-    }
 
     let target = options.into.join(&options.slug);
     if target.exists() {
@@ -45,7 +43,7 @@ pub fn run(root: &Path, options: &Options) -> Result<(), String> {
     }
 
     let substitutions = substitutions(options);
-    copy_template(&template, &target, &substitutions)?;
+    write_template(&target, &substitutions)?;
 
     if let Some(origin) = &options.local {
         patch_to_local(&target, origin)?;
@@ -53,7 +51,7 @@ pub fn run(root: &Path, options: &Options) -> Result<(), String> {
 
     // Leave a project that already passes its own checks, rather than one whose first
     // CI run is red.
-    crate::generate(&target)?;
+    origin_xtask::generate(&target)?;
 
     println!("created {}", target.display());
     println!("\nnext:");
@@ -125,61 +123,61 @@ fn substitutions(options: &Options) -> Vec<(&'static str, String)> {
         ("__CRATE_NAME_SNAKE__", options.slug.replace('-', "_")),
         ("__CRATE_NAME__", options.slug.clone()),
         ("__PACKAGE_NAME__", options.slug.clone()),
-        ("__ORIGIN_VERSION__", CURRENT.to_string()),
+        ("__ORIGIN_VERSION__", CURRENT_VERSION.to_string()),
         (
             "__ORIGIN_SEMVER__",
-            format!("{}.{}", CURRENT.major, CURRENT.minor),
+            format!("{}.{}", CURRENT_VERSION.major, CURRENT_VERSION.minor),
         ),
-        ("__ORIGIN_NPM__", format!("^{CURRENT}")),
+        ("__ORIGIN_NPM__", format!("^{CURRENT_VERSION}")),
     ]
 }
 
-fn copy_template(
-    template: &Path,
-    target: &Path,
-    substitutions: &[(&str, String)],
-) -> Result<(), String> {
-    std::fs::create_dir_all(target)
-        .map_err(|error| format!("cannot create {}: {error}", target.display()))?;
+/// Write every embedded template file into `target`.
+fn write_template(target: &Path, substitutions: &[(&str, String)]) -> Result<(), String> {
+    for (path, contents) in crate::template_files() {
+        let destination = target.join(destination(path));
 
-    let entries = std::fs::read_dir(template)
-        .map_err(|error| format!("cannot read {}: {error}", template.display()))?;
-
-    for entry in entries.filter_map(Result::ok) {
-        let source = entry.path();
-        let destination = target.join(entry.file_name());
-
-        if source.is_dir() {
-            copy_template(&source, &destination, substitutions)?;
-            continue;
+        if let Some(parent) = destination.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
         }
 
-        let is_binary = source
-            .extension()
-            .and_then(|extension| extension.to_str())
-            .is_some_and(|extension| BINARY_EXTENSIONS.contains(&extension));
-
-        if is_binary {
-            std::fs::copy(&source, &destination)
-                .map_err(|error| format!("cannot copy {}: {error}", source.display()))?;
-            continue;
-        }
-
-        let contents = std::fs::read_to_string(&source)
-            .map_err(|error| format!("cannot read {}: {error}", source.display()))?;
-
-        // Longest placeholder first, so `__CRATE_NAME_SNAKE__` is not eaten by
-        // `__CRATE_NAME__`.
-        let mut rendered = contents;
-        for (placeholder, value) in substitutions {
-            rendered = rendered.replace(placeholder, value);
-        }
+        let rendered = if is_binary(path) {
+            (*contents).to_vec()
+        } else {
+            let text = std::str::from_utf8(contents)
+                .map_err(|error| format!("template file {path} is not valid UTF-8: {error}"))?;
+            render(text, substitutions).into_bytes()
+        };
 
         std::fs::write(&destination, rendered)
             .map_err(|error| format!("cannot write {}: {error}", destination.display()))?;
     }
 
     Ok(())
+}
+
+/// The path a template file is written to: its own, without the `.in` suffix.
+fn destination(path: &str) -> &str {
+    path.strip_suffix(RENAMED_SUFFIX).unwrap_or(path)
+}
+
+fn is_binary(path: &str) -> bool {
+    path.rsplit('.')
+        .next()
+        .is_some_and(|extension| BINARY_EXTENSIONS.contains(&extension))
+}
+
+/// Replace every placeholder in a template file.
+///
+/// The substitutions are applied in order, longest placeholder first, so
+/// `__CRATE_NAME_SNAKE__` is not eaten by `__CRATE_NAME__`.
+fn render(contents: &str, substitutions: &[(&str, String)]) -> String {
+    let mut rendered = contents.to_owned();
+    for (placeholder, value) in substitutions {
+        rendered = rendered.replace(placeholder, value);
+    }
+    rendered
 }
 
 /// Point the generated project at a local Origin checkout.
@@ -248,8 +246,8 @@ fn rewrite_npm_dependencies(target: &Path, origin: &Path) -> Result<(), String> 
     let contents = std::fs::read_to_string(&manifest)
         .map_err(|error| format!("cannot read {}: {error}", manifest.display()))?;
 
-    let client_release = format!("\"@casoon/origin-client\": \"^{CURRENT}\"");
-    let ui_release = format!("\"@casoon/origin-ui\": \"^{CURRENT}\"");
+    let client_release = format!("\"@casoon/origin-client\": \"^{CURRENT_VERSION}\"");
+    let ui_release = format!("\"@casoon/origin-ui\": \"^{CURRENT_VERSION}\"");
     let rewritten = contents
         .replace(
             &client_release,
@@ -268,4 +266,68 @@ fn rewrite_npm_dependencies(target: &Path, origin: &Path) -> Result<(), String> 
 
     std::fs::write(&manifest, rewritten)
         .map_err(|error| format!("cannot write {}: {error}", manifest.display()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_renamed_template_file_is_written_under_its_real_name() {
+        assert_eq!(destination("Cargo.toml.in"), "Cargo.toml");
+        assert_eq!(destination("xtask/Cargo.toml.in"), "xtask/Cargo.toml");
+        assert_eq!(destination("app.toml"), "app.toml");
+    }
+
+    #[test]
+    fn the_longer_placeholder_wins() {
+        let options = Options {
+            slug: "my-app".to_owned(),
+            name: "My App".to_owned(),
+            id: "dev.example.myapp".to_owned(),
+            into: PathBuf::from("."),
+            local: None,
+        };
+
+        let rendered = render(
+            "name = \"__CRATE_NAME__\"\nlib = \"__CRATE_NAME_SNAKE___lib\"",
+            &substitutions(&options),
+        );
+
+        assert_eq!(rendered, "name = \"my-app\"\nlib = \"my_app_lib\"");
+    }
+
+    #[test]
+    fn icons_are_not_treated_as_text() {
+        assert!(is_binary("src-tauri/icons/icon.icns"));
+        assert!(is_binary("src-tauri/icons/128x128@2x.png"));
+        assert!(!is_binary("src-tauri/tauri.conf.json"));
+        assert!(!is_binary("Cargo.toml.in"));
+    }
+
+    fn options(slug: &str, id: &str) -> Options {
+        Options {
+            slug: slug.to_owned(),
+            name: "My App".to_owned(),
+            id: id.to_owned(),
+            into: PathBuf::from("."),
+            local: None,
+        }
+    }
+
+    #[test]
+    fn a_slug_that_would_not_survive_a_path_or_a_crate_name_is_refused() {
+        assert!(validate_options(&options("my-app", "dev.example.app")).is_ok());
+        assert!(validate_options(&options("My-App", "dev.example.app")).is_err());
+        assert!(validate_options(&options("../escape", "dev.example.app")).is_err());
+        assert!(validate_options(&options("my--app", "dev.example.app")).is_err());
+        assert!(validate_options(&options("-app", "dev.example.app")).is_err());
+    }
+
+    #[test]
+    fn a_product_id_that_is_not_reverse_dns_is_refused() {
+        assert!(validate_options(&options("my-app", "app")).is_err());
+        assert!(validate_options(&options("my-app", "dev..app")).is_err());
+        assert!(validate_options(&options("my-app", "dev.example.")).is_err());
+    }
 }

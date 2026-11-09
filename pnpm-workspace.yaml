@@ -1,3 +1,10 @@
 packages:
   - "frontend/*"
   - "examples/demo"
+
+# deepmerge <=4.3.1 (GHSA-gcqx-w48m-w2h4, low) has no patched release yet. It is only
+# reached through @sveltejs/vite-plugin-svelte in the demo's build tooling, never in
+# shipped code. Remove this once deepmerge publishes a fix.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-gcqx-w48m-w2h4

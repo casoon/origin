@@ -84,6 +84,8 @@ crates/            platform crates — never depend on Tauri, never know a produ
   origin-ai          inference the application performs itself
   origin-manifest    app.toml: what a product is, plus the security profiles
   origin-xtask       the maintenance tasks, as a library
+  origin-cli         the `origin` command; `templates/` holds the project
+                     template it instantiates, with its own documentation set
   origin-telemetry   tracing setup and logging conventions
   origin-app         ApplicationBuilder, modules, service registry
 
@@ -103,8 +105,6 @@ host/origin-tauri  plugin wiring, tray, IPC commands, event bridge
 frontend/client    @casoon/origin-client — the only package that speaks Tauri IPC
 frontend/ui        @casoon/origin-ui — shared Svelte 5 components and design tokens
 examples/demo      the reference application
-templates/app      the project template `cargo xtask new` instantiates,
-                   with its own English documentation set
 xtask              entry point; the tasks live in crates/origin-xtask
 adr/               architecture decision records
 ```
@@ -124,6 +124,15 @@ On Linux you also need the Tauri system dependencies (`libwebkit2gtk-4.1-dev`,
 > **Note**: If you use [Volta](https://volta.sh/) as your Node version manager on macOS, ensure your user owns `~/.volta` (`chown -R $(whoami) ~/.volta`) to prevent Volta permission errors during `pnpm` workspace checks.
 
 ## Getting started
+
+A new application needs nothing but Rust and this one command:
+
+```bash
+cargo install origin-cli
+origin new my-app --name "My App" --id dev.example.myapp
+```
+
+To run Origin itself — the reference application, from a checkout:
 
 ```bash
 pnpm install

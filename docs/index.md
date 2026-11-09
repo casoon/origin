@@ -39,7 +39,7 @@ all of it. The central rule: **domain code does not know Tauri exists.**
 
 | Page | Purpose |
 | --- | --- |
-| [Updating a project](lifecycle/updating/) | `cargo xtask new`, migrations, keeping derivatives current |
+| [Updating a project](lifecycle/updating/) | `origin new`, migrations, keeping derivatives current |
 | [Publishing](lifecycle/publishing/) | Publishing the `origin-*` crates and npm packages, in order |
 
 ## Reference
