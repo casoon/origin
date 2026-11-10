@@ -7,6 +7,10 @@ together.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Docs:** the README, the [crate reference](https://casoon.github.io/origin/docs/reference/crates/) and the project site state the current release and list `origin-kit`; they still showed 0.2.
+
 ## [0.3.1] - 2026-11-09
 
 ### Changed

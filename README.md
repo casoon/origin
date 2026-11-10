@@ -17,17 +17,22 @@ application that demonstrates all of it.
 
 ## Status
 
-Current release: **0.2.0**. The project is still pre-1.0.
+Current release: **0.3.1**. The project is still pre-1.0. All `origin-*` crates are on
+crates.io and both frontend packages on npm, released together under one version.
 
 Implemented: the architecture contract, the platform contracts, the Tauri host
 layer, OAuth with PKCE, account management, the connector contract, the sync engine,
 background jobs, local workspace/process contracts and adapters, MCP over stdio and
-authenticated loopback HTTP, the app manifest with generated capabilities, and a
-running reference application.
+authenticated loopback HTTP, the app manifest with generated capabilities, the `origin`
+command that scaffolds a project from its embedded template, and a running reference
+application.
 
 Distribution is prepared in the template: a tag-driven release workflow that builds
 unsigned by default, states in the log what the artifact is, and turns signing on one
 secret at a time. Nothing there is verified end to end — there is no product to sign yet.
+
+Open work and its order are tracked in the
+[roadmap issue](https://github.com/casoon/origin/issues/68).
 
 ## The central rule
 

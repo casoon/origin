@@ -4,7 +4,7 @@ description: "Every published origin-* crate and npm package, grouped by layer, 
 order: 1
 ---
 
-All 29 crates and both npm packages share the workspace version, currently **0.2.0**.
+All 30 crates and both npm packages share the workspace version, currently **0.3.1**.
 Item-level API documentation lives on docs.rs; this page is the map. How the layers depend
 on each other is described in the [architecture overview](../../concepts/overview/).
 
@@ -40,6 +40,7 @@ on each other is described in the [architecture overview](../../concepts/overvie
 | --- | --- | --- |
 | `origin-manifest` | The Origin app manifest: what a product is, parsed and validated. | [crates.io](https://crates.io/crates/origin-manifest) · [docs.rs](https://docs.rs/origin-manifest) |
 | `origin-xtask` | Origin maintenance tasks as a library, so a derivative's xtask is three lines and its rules arrive with a version bump. | [crates.io](https://crates.io/crates/origin-xtask) · [docs.rs](https://docs.rs/origin-xtask) |
+| `origin-kit` | The `origin` command: create a new Origin application from the embedded project template, without a checkout of Origin. | [crates.io](https://crates.io/crates/origin-kit) · [docs.rs](https://docs.rs/origin-kit) |
 
 ## Adapters
 

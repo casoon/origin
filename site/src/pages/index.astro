@@ -41,6 +41,7 @@ const latestRelease = config.changelog
   >
     <Install
       commands={[
+        { label: 'origin', command: 'cargo install origin-kit' },
         { label: 'git', command: 'git clone https://github.com/casoon/origin' },
         { label: 'cargo', command: 'cargo add origin-app origin-tauri' },
         { label: 'pnpm', command: 'pnpm add @casoon/origin-client @casoon/origin-ui' },
@@ -82,9 +83,9 @@ const latestRelease = config.changelog
 
   <Facts
     items={[
-      { value: '29', label: 'crates on crates.io, all at 0.2.1' },
+      { value: '30', label: `crates on crates.io, all at ${config.version}` },
       { value: '15', label: 'binding rules in ARCHITECTURE.md' },
-      { value: '31', label: 'architecture decision records' },
+      { value: '32', label: 'architecture decision records' },
       { value: '4', label: 'named security profiles instead of permission lists' },
     ]}
   />
