@@ -29,7 +29,7 @@ Each project records the version it tracks:
 
 ```toml
 [origin]
-version = "0.2.0"
+version = "0.3.0"
 ```
 
 `update` runs the migrations between that and the current version, in order, then
