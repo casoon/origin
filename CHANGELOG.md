@@ -9,7 +9,7 @@ together.
 
 ### Changed
 
-- **Pages:** the project site uses the current shared theme (0.12.10).
+- **Pages:** the project site uses the current shared theme (0.12.11).
 
 ### Fixed
 
