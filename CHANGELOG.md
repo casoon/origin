@@ -7,6 +7,10 @@ together.
 
 ## [Unreleased]
 
+### Changed
+
+- **Pages:** the project site uses the current shared theme (0.12.8).
+
 ### Fixed
 
 - **Docs:** the README, the [crate reference](https://casoon.github.io/origin/docs/reference/crates/) and the project site state the current release and list `origin-kit`; they still showed 0.2.
