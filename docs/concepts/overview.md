@@ -161,3 +161,36 @@ client over stdio (`origin-mcp-stdio`) or authenticated loopback HTTP
 (`origin-mcp-http`), and the whole application is testable with
 `ApplicationBuilder::in_memory()` and no desktop session — see
 [AI integration](../../guides/ai-integration/) and [Testing](../../guides/testing/).
+
+## Scope and limits
+
+Origin takes repeated decisions off an application. It does not take the work on the
+application's own subject off it.
+
+- **Not a replacement for Tauri.** Tauri stays the host with its plugins, webview and
+  build. Origin only orders which layer may sit where.
+- **No finished features.** There is no bundled user interface and no domain logic. What
+  the product can do, the product writes; Origin supplies the contracts underneath.
+- **Pre-1.0.** A minor release may still change the public API, although the migrations
+  are tested against frozen fixture projects ([Updating](../../lifecycle/updating/)).
+- **Distribution is preparation.** The template carries a tag-driven release workflow that
+  builds unsigned by default and says so in the log, and the updater is off by default.
+  None of it is verified end to end yet, because there is no signed product. Anyone who
+  wants to ship today should plan their own work here
+  ([ADR-0030](https://github.com/casoon/origin/blob/main/adr/0030-distribution.md)).
+- **Desktop, not web or mobile.** The platform contracts describe desktop capabilities:
+  keychain, tray, file system, local processes. For web or mobile targets the cut is wrong.
+
+## Built on Origin
+
+Four products of CASOON are built on Origin. Their repositories are private, so there is
+nothing to link; they show the two ways to use it.
+
+| Product | What it is | How it uses Origin |
+| --- | --- | --- |
+| Timbra | Timetable planning for schools and universities | Tauri app with a Svelte 5 frontend; keeps the `origin-*` crates inside its own repository |
+| Avilo | Resource-based appointment and patient planning for practices | Same approach, with its own copies of the crates, including `origin-ai` and MCP over stdio |
+| Gitbit | GitHub workspace for the desktop | Takes the `origin-*` crates from crates.io, including `origin-tauri`, currently on the 0.2 line |
+| Kestrel | Market data terminal | Uses only `origin-domain`, `origin-app`, `origin-secrets`, `origin-secrets-system` and `origin-manifest`, without `origin-tauri`; also from crates.io, on 0.2 |
+
+Kestrel is the proof that the crates stand on their own.

@@ -138,8 +138,8 @@ const latestRelease = config.changelog
     lead="Run the reference application: a tray app with a background loop, cached readings, typed events, native notifications and a Svelte 5 frontend."
     steps={[
       'Install Rust 1.89+, Node 22+, pnpm 10+ and the Tauri CLI.',
-      'Clone the repository and run <code>pnpm install</code>.',
-      'Start the demo with <code>cargo xtask demo</code>, then read its composition root.',
+      'Clone the repository and run pnpm install.',
+      'Start the demo with cargo xtask demo, then read its composition root.',
     ]}
   >
     <CodeBlock code={quickstart} lang="shell" title="terminal" label="Shell" />
@@ -162,8 +162,28 @@ const latestRelease = config.changelog
         a: 'Through MCP, over stdio or authenticated loopback HTTP, with a permission level of its own that defaults to read/propose only. Commit and delete calls need both an explicit grant and a human confirmation.',
       },
       {
+        q: 'Do I have to adopt all the origin crates?',
+        a: 'No. They are published individually and cut to need no shared context. One of our own products uses only origin-domain, origin-app, origin-secrets, origin-secrets-system and origin-manifest and leaves out origin-tauri.',
+      },
+      {
+        q: 'How is the rule enforced that domain code does not know Tauri?',
+        a: 'By cargo xtask validate, which CI runs too. It checks the dependency direction between crates/, adapters/, host/ and examples/, rejects blanket fs and shell capabilities, and fails on a frontend import of Tauri outside @casoon/origin-client or a command the frontend calls that does not exist in Rust.',
+      },
+      {
+        q: 'What happens when a new Origin version comes out?',
+        a: 'The project records the version it follows in app.toml. cargo xtask update runs the migrations up to the current version, regenerates the Origin-owned files and returns a checklist for anything that needs a human decision. Details are in the docs under Lifecycle, Updating a project.',
+      },
+      {
+        q: 'How do the frontend and the Rust core fit together?',
+        a: '@casoon/origin-client is the only package that talks to Tauri IPC. The TypeScript types for platform IPC and for a product’s command results are generated from the Rust definitions, so a rename in Rust fails in CI instead of showing up as undefined at runtime. Details are in the docs under Concepts, The manifest.',
+      },
+      {
+        q: 'May I deviate from a recommendation?',
+        a: 'Yes, but not silently: either under [origin.overrides] in app.toml or as an ADR in adr/. A migration skips what is listed there instead of overwriting it.',
+      },
+      {
         q: 'Is Origin ready for production use?',
-        a: "It is pre-1.0, so a minor release may still change the public API. The architecture contract, platform contracts, OAuth, sync engine and reference application are implemented; the signed release pipeline exists but hasn't been exercised end to end for a real product yet.",
+        a: 'It is pre-1.0, so a minor release may still change the public API. The architecture contract, platform contracts, OAuth, sync engine and reference application are implemented; the signed release pipeline exists but hasn’t been exercised end to end for a real product yet. It is for the desktop, not for web or mobile. More under Concepts, Architecture overview, Scope and limits.',
       },
     ]}
   />
