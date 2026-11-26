@@ -224,6 +224,10 @@ where it is needed and moves into the platform only once a genuinely neutral sha
 emerged, in practice at the third occurrence. Deviating from a recommendation is
 allowed, but the deviation must be explicit — in the app manifest or as an ADR.
 
+## Author
+
+Built and maintained by [Jörn Seidel](https://www.casoon.de/joern-seidel/) ([CASOON](https://www.casoon.de/)). Background and design decisions are described in an article on Insights (in German): [Origin: Rust-Desktop-Anwendungen, deren Fachlogik Tauri nicht kennt](https://insights.casoon.de/artikel/origin-tauri-desktop-architektur-domain-ohne-host/).
+
 ## License
 
 Origin is released under the [MIT License](LICENSE). Individual crates are intended to
